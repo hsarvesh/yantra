@@ -1,0 +1,350 @@
+user_id,Employee Name,First_Name,Last_Name,Designation,Email,IRM
+DakVen,Dakoju Venugopal,Dakoju,Venugopal,Sr. Software Engineer,venugopal.dakoji@yash.com,Vikas Lakhani
+AkaKum,Akash Kumar Singh,Akash,Kumar,Consultant,singh.akash@yash.com,Roshansingh Vikassingh Deore
+AriMoh,Arif Mohammed,Arif,Mohammed,Sr. Consultant,mohd.arif@yash.com,Aveen Sathyanath
+AyuSin,Ayush Singh,Ayush,Singh,Consultant,ayush.singh@yash.com,Ajaz Hanif
+DarBha,Darla Bhargava Chari,Darla,Bhargava,Consultant,bhargavachari.darla@yash.com,Rakesh Rajgopal
+SamSra,Sambu Sravan Kumar,Sambu,Sravan,Consultant,sravan.sambu@yash.com,Anipi Pavan Kumar
+PraHar,Pradeep Harige,Pradeep,Harige,Consultant,pradeep.harige@yash.com,Mohammad Javed Idrisi
+RosKes,Roshan Keshavrao Halgule,Roshan,Keshavrao,Consultant,roshan.halgule@yash.com,Prashant Jain
+PasRav,Pasupuleti Ravi Teja,Pasupuleti,Ravi,Consultant,raviteja.pasupuleti@yash.com,Prashant Jain
+PriPan,Priyanka Panigrahy,Priyanka,Panigrahy,Consultant,priyanka.panigrahy@yash.com,Devang Khanwalkar
+AshKis,Ashishkumar Kishorrao Patil,Ashishkumar,Kishorrao,Consultant,ashishkumar.patil@yash.com,Prashant Jain
+GauMad,Gaurav Madhukar Nagoshe,Gaurav,Madhukar,Consultant,gaurav.nagoshe@yash.com,Vishal Kumar Tiwari
+TanPam,Tanujkumar Pamarthi,Tanujkumar,Pamarthi,Sr. Consultant,tanujkumar.pamarthi@yash.com,Kiran Joshi
+ShiDee,Shivaji Deelip Suryawanshi,Shivaji,Deelip,Sr. Consultant,shivaji.suryawanshi@yash.com,Rohit Jamuar
+GanSwe,Gangu Swetha,Gangu,Swetha,Associate Consultant,swetha.gangu@yash.com,Roshansingh Vikassingh Deore
+RohDat,Rohit Dattatray Sutar,Rohit,Dattatray,Associate Lead Consultant,rohit.sutar@yash.com,Aveen Sathyanath
+JasKau,Jasmeet Kaur,Jasmeet,Kaur,Sr. Consultant,jasmeet.kaur@yash.com,Vikas Lakhani
+BodRag,Boddu Raghaveendra,Boddu,Raghaveendra,Associate Consultant,raghaveendra.boddu@yash.com,Anipi Pavan Kumar
+ShiCha,Shivanand Channappa Avati,Shivanand,Channappa,Sr. Consultant,shivanand.avati@yash.com,Aravind Kumar Durga N
+VisAni,Vishwesh Anil Ahirrao,Vishwesh,Anil,Associate Consultant,vishwesh.ahirrao@yash.com,Vishal Kumar Tiwari
+DhaGaj,Dhananjay Gajanan Gaikwad,Dhananjay,Gajanan,Associate Lead Consultant,dhananjay.gaikwad@yash.com,Kiran Joshi
+CheSri,Chenna Srilatha,Chenna,Srilatha,Associate Consultant,srilatha.chenna@yash.com,Aveen Sathyanath
+NikShr,Nikhil Shrivastava,Nikhil,Shrivastava,Associate Consultant,nikhil.shrivastava@yash.com,Kuldeep Solanki
+SunYad,Suneel Yadav,Suneel,Yadav,Sr. Consultant,suneel.yadav@yash.com,Dilraj Thevarkandy
+KirJos,Kiran Joshi,Kiran,Joshi,Associate Lead Consultant,kiran.joshi@yash.com,Ajaz Hanif
+NarPan,Narendra Panjabrao Baraskar,Narendra,Panjabrao,Associate Lead Consultant,narendra.baraskar@yash.com,Vikas Lakhani
+KriKan,Krishna Kanth Madabhushi,Krishna,Kanth,Sr. Executive,krishnakanth.m@yash.com,Hazari Mohit Raj
+SyeAbb,Syed Abbas Pasha,Syed,Abbas,Associate Consultant,abbas.syed@yash.com,Venkata Subba Reddy Mopuru
+ChaR,Chandramohan R,Chandramohan,R,Dy. General Manager,chandramohan.r@yash.com,Thomas Lijo Sebastian
+PalSet,Palak Sethiya,Palak,Sethiya,Associate Consultant,palak.sethiya@yash.com,Ashwinikumar Subhashchandra Jain
+RohVas,Rohit Vasant Marathe,Rohit,Vasant,Consultant,rohit.marathe@yash.com,Santosh Uttam Salve
+VikAmr,Vikas Amrut Ahire Patil,Vikas,Amrut,Sr. Consultant,vikas.patil@yash.com,Aveen Sathyanath
+SejDil,Sejal Dilip Ghatode,Sejal,Dilip,Associate Consultant,sejal.ghatode@yash.com,Roshansingh Vikassingh Deore
+SudPan,Sudeep Pandey,Sudeep,Pandey,Associate Lead Consultant,sudeep.pandey@yash.com,Aveen Sathyanath
+VijKum,Vijay Kumar Jaiswal,Vijay,Kumar,Sr. Consultant,vijay.jaiswal@yash.com,Sudeep Pandey
+SanUtt,Santosh Uttam Salve,Santosh,Uttam,Sr. Consultant,santosh.salve@yash.com,Sahil Deep Singh Gill
+VidKar,Vidyasagar Karedla,Vidyasagar,Karedla,Sr. Consultant,vidyasagar.karedla@yash.com,Anipi Pavan Kumar
+RamK,Ramana K V,Ramana,K,Sr. Practice Manager,venkataramana.k@yash.com,Syed Parvez Ali
+GirR,Girish R H,Girish,R,Associate Lead Consultant,Girish.rotti@yash.com,Ajit Madhusudan Tupe
+AniKum,Anil Kumar Jatla,Anil,Kumar,Sr. Technical Architect,anilkumar.jatla@yash.com,Syed Parvez Ali
+SorJai,Sorabh Jain,Sorabh,Jain,Associate Lead Consultant,sorabh.jain@yash.com,Koguri Manjunath Babu
+PraJai,Prashant Jain,Prashant,Jain,Associate Lead Consultant,prashant.jain@yash.com,Vikas Kalra
+ThiNed,Thirunavukkarasu Nedunchezhian,Thirunavukkarasu,Nedunchezhian,Associate Lead Consultant,t.nedunchezhian@yash.com,R Vijayan
+SacJab,Sachin Jabshetty,Sachin,Jabshetty,Sr. Manager,sachin.jabshetty@yash.com,Abhishek Pandey
+BanSai,Bandi Sai Srikanth,Bandi,Sai,Sr. Consultant,srikanth.bandi@yash.com,Prateesh Kumar Patel
+RajUkk,Rajkiran Ukkaji,Rajkiran,Ukkaji,Lead Consultant,rajkiran.ukkaji@yash.com,Ajaz Hanif
+SunDil,Sunilkumar Dillibabu,Sunilkumar,Dillibabu,Sr. Consultant,sunil.dillibabu@yash.com,Prashant Saxena
+SuyBha,Suyog Bhale,Suyog,Bhale,Sr. Consultant,suyog.bhale@yash.com,Bhavani Shankar Bandi
+MohSab,Mohd Sabir Ansari,Mohd,Sabir,Associate Lead Consultant,mohdsabir.ansari@yash.com,Padmanabha Rao Chilukuri
+PraThi,Prabhakaran Thirunathan,Prabhakaran,Thirunathan,Sr. Consultant,prabhakaran.t@yash.com,Satish Kumar Allani
+JoyDey,Joydeep Dey,Joydeep,Dey,Associate Lead Consultant,joydeep.dey@yash.com,Vikas Lakhani
+VikLak,Vikas Lakhani,Vikas,Lakhani,Lead Consultant,vikas.lakhani@yash.com,Chandramohan R
+MohJav,Mohammad Javed Idrisi,Mohammad,Javed,Associate Lead Consultant,mohammadjaved.idrisi@yash.com,Vikas Kalra
+SihVet,Sihab Vettu Parambil,Sihab,Vettu,Sr. Consultant,sihab.vp@yash.com,Kiran Joshi
+AruKum,Arunakumar Kumbar,Arunakumar,Kumbar,Sr. Consultant,arunakumar.kumbar@yash.com,Kiran Joshi
+ShaRed,Shashidhar Reddy Kandamala,Shashidhar,Reddy,Associate Lead Consultant,kandamala.shashidhar@yash.com,Rakesh Rajgopal
+KunKat,Kunal Katariya,Kunal,Katariya,Associate Consultant,kunal.katariya@yash.com,Roshansingh Vikassingh Deore
+SanKum,Sandeep Kumar Nalla,Sandeep,Kumar,Associate Lead Consultant,sandeep.nalla@yash.com,Bhavani Shankar Bandi
+AnoNai,Anoop Nair,Anoop,Nair,Associate Technical Architect,anoop.nair@yash.com,Rizwan Shaik
+VipBha,Vipulkumar Bhagabhai Patel,Vipulkumar,Bhagabhai,Sr. Practice Manager,vipul.patel@yash.com,Syed Parvez Ali
+AnkRai,Ankit Rai,Ankit,Rai,Consultant,rai.ankit@yash.com,Ayush Singh
+TanRav,Tanmay Ravindra Shastri,Tanmay,Ravindra,Associate Consultant,tanmay.shastri@yash.com,Roshansingh Vikassingh Deore
+SumEkn,Sumit Eknath Patil,Sumit,Eknath,Associate Lead Consultant,sumit.patil@yash.com,Vikas Lakhani
+NikKam,Nikhil Kamlakar Deshpande,Nikhil,Kamlakar,Associate Consultant,nikhil.deshpande@yash.com,Kiran Joshi
+PavSam,Pavan Sampat Varpe,Pavan,Sampat,Associate Consultant,pavan.varpe@yash.com,Vineel Kiran Purimitla
+SanPra,Sanika Prakash Waghmare,Sanika,Prakash,Associate Consultant,sanika.waghmare@yash.com,Mohammad Javed Idrisi
+KetKan,Ketan Kanubhai Patel,Ketan,Kanubhai,Sr. Practice Manager,ketan.patel@yash.com,Syed Parvez Ali
+VarMis,Varun Mishra,Varun,Mishra,Sr. Consultant,varun.mishra@yash.com,Aveen Sathyanath
+HarKup,Harikrishnan Kuppusamy,Harikrishnan,Kuppusamy,Manager,harikrishnan.k@yash.com,Dilraj Thevarkandy
+RosVik,Roshansingh Vikassingh Deore,Roshansingh,Vikassingh,Associate Lead Consultant,roshansingh.deore@yash.com,Bhavani Shankar Bandi
+SarLax,Sarvana Laxman Naidu,Sarvana,Laxman,Associate Lead Consultant,sarvana.naidu@yash.com,Vineel Kiran Purimitla
+ManKum,Mantosh Kumar,Mantosh,Kumar,Associate Lead Consultant,mantosh.kumar@yash.com,Sarvesh M Huddedar
+NeeGab,Neelesh Gabra,Neelesh,Gabra,Associate Technical Architect,neelesh.gabra@yash.com,Syed Parvez Ali
+AudRam,Audesh Ramesh Chaurasia,Audesh,Ramesh,Associate Lead Consultant,audesh.chaurasia@yash.com,Rohit Jamuar
+ShrRaj,Shruthi Rajagopal,Shruthi,Rajagopal,Consultant,shruthi.r@yash.com,Rakesh Rajgopal
+SubPem,Subhash Pemmasani,Subhash,Pemmasani,Sr. Technical Architect,subhash.pemmasani@yash.com,Sanath Kumar Reddy Thudi
+GajMou,Gajendra Mourya,Gajendra,Mourya,Tech Lead,gajendra.mourya@yash.com,Sanath Kumar Reddy Thudi
+SudSas,Sudarshan Sasane,Sudarshan,Sasane,Associate Consultant,sudarshan.sasane@yash.com,Rizwan Shaik
+ParCha,Paras Chand Katoch,Paras,Chand,Consultant,paras.katoch@yash.com,Vikas Lakhani
+BalMoh,Balwant Mohan Jadhav,Balwant,Mohan,Consultant,balwant.jadhav@yash.com,Rizwan Shaik
+NikGau,Nikhil Gautam Hatkar,Nikhil,Gautam,Consultant,nikhil.hatkar@yash.com,Rizwan Shaik
+SriRao,Srinivasa Rao Narikelapu,Srinivasa,Rao,Sr. Consultant,srinivasa.narikelapu@yash.com,Ravi Kiran Nuthakki
+SriLat,Sri Latha Narumanchi,Sri,Latha,Sr. Consultant,srilatha.narumanchi@yash.com,Padmanabha Rao Chilukuri
+PooAks,Pooja Akshay Jagtap,Pooja,Akshay,Consultant,pooja.gore@yash.com,Aveen Sathyanath
+LN,L N Srikanth,L,N,Associate Consultant,srikanth.ln@yash.com,Mohammad Javed Idrisi
+ChiDin,Chilupuri Dinesh,Chilupuri,Dinesh,Sr. Consultant,chilupuri.dinesh@yash.com,Arpit Tater
+PreI,Prem I Rajure,Prem,I,Associate Lead Consultant,premsing.rajure@yash.com,Chandramohan R
+ShaShi,Shashank Shivajirao Shirke,Shashank,Shivajirao,Sr. Consultant,shashank.shirke@yash.com,Rizwan Shaik
+HarRah,Harsha Rahul Thaokar,Harsha,Rahul,Consultant,harsha.thaokar@yash.com,Aveen Sathyanath
+RasSin,Rashmi Singh,Rashmi,Singh,Sr. Consultant,rashmi.singh@yash.com,Rakesh Rajgopal
+GopNag,Gopu Nagarajan,Gopu,Nagarajan,Associate Lead Consultant,gopu.nagarajan@yash.com,Rizwan Shaik
+AmiNam,Amit Namdeo,Amit,Namdeo,Associate Lead Consultant,amit.namdeo@yash.com,Rizwan Shaik
+MohBil,Mohamed Bilal Kamal Mohamed Rafiuddeen,Mohamed,Bilal,Associate Lead Consultant,mohamed.bilal@yash.com,Rizwan Shaik
+VenGop,Venu Gopal Setty K,Venu,Gopal,Associate Lead Consultant,venugopal.s@yash.com,Rizwan Shaik
+UmeCha,Umesh Chandrakant Nakate,Umesh,Chandrakant,Sr. Consultant,umesh.nakate@yash.com,Prashant Jain
+SurTiw,Suraj Tiwari,Suraj,Tiwari,Associate Consultant,suraj.tiwari@yash.com,Ayush Singh
+GueFar,Guerhon Farrell,Guerhon,Farrell,Contractor,guerhon.farrell@yash.com,Dawn Amanda Boon
+ArpTat,Arpit Tater,Arpit,Tater,Associate General Manager,arpit.tater@yash.com,Syed Parvez Ali
+AbhPan,Abhishek Pandey,Abhishek,Pandey,Solution Architect,abhishek.pandey@yash.com,Syed Parvez Ali
+HimSin,Himanshu Singh,Himanshu,Singh,Lead Software Engineer,himanshu.singh@yash.com,Abbas Huseni Hirkani
+SeaM,Sean M Dean,Sean,M,Software Engineer,sean.dean@yash.com,Karthikeyan Venkataramanan
+SraKon,Sravan Konda,Sravan,Konda,Contractor,sravan.konda@yash.com,Shashi Bhushan
+ChrGeo,Christaki Georgiou,Christaki,Georgiou,Contractor,christaki.georgiou@yash.com,Nicola Rowley
+RenDar,Renz Darryl Asuer Jullar,Renz,Darryl,Contractor,renz.jullar@yash.com,Ajaz Hanif
+LonDre,Lonny Drew Olsen,Lonny,Drew,Contractor,lonny.olsen@yash.com,Narendar Reddy Goli
+WojLes,Wojciech Leszczynski,Wojciech,Leszczynski,Contractor,wojciech.l@yash.com,Narendar Reddy Goli
+EswSar,Eswar Sarojkumar Ijjapureddi,Eswar,Sarojkumar,Contractor,eswar.ijjapureddi@yash.com,Prashanth Raghava Dasyam
+VenRaj,Venkata Rajesh Parimi,Venkata,Rajesh,Contractor,venkata.parimi@yash.com,Niranjan Ranga Reddy Gari
+SanPra,Sankuratri Prabhakararao,Sankuratri,Prabhakararao,Consultant,s.prabhakararao@yash.com,Padmanabha Rao Chilukuri
+NitKum,Nitesh Kumar,Nitesh,Kumar,Sr. Consultant,nitesh.kumar@yash.com,Sudeep Pandey
+RakKum,Rakesh Kumar Jain,Rakesh,Kumar,Vice President,rakeshkumar.jain@yash.com,Nitin Kumar Gupta
+SusKum,Sushil Kumar Gupta,Sushil,Kumar,Sr. Consultant,sushil.gupta@yash.com,Sudeep Pandey
+VisKum,Vishal Kumar Tiwari,Vishal,Kumar,Sr. Consultant,vishal.tiwari@yash.com,Padmanabha Rao Chilukuri
+RitRan,Ritesh Ranjan,Ritesh,Ranjan,Consultant,ritesh.ranjan@yash.com,Sudeep Pandey
+NeeSha,Neeraj Sharma,Neeraj,Sharma,Sr. Consultant,neeraj.sharma@yash.com,Prashant Saxena
+NidKum,Nidhi Kumari,Nidhi,Kumari,Consultant,nidhi.kumari@yash.com,Aveen Sathyanath
+YasBha,Yashika Bhatia Sakhuja,Yashika,Bhatia,Consultant,yashika.bhatia@yash.com,Sudeep Pandey
+PavKum,Pavan Kumar Puttolla,Pavan,Kumar,Associate Lead Consultant,pavan.puttolla@yash.com,Dilraj Thevarkandy
+TauAhm,Tauseef Ahmad,Tauseef,Ahmad,Consultant,tauseef.ahmad@yash.com,Venkata Subba Reddy Mopuru
+KurNav,Kurra Naveen Kumar Reddy,Kurra,Naveen,Associate Consultant,naveen.kurra@yash.com,Vishal Kumar Tiwari
+GayRaj,Gayatri Rajendra Dorlikar,Gayatri,Rajendra,Consultant,gayatri.dorlikar@yash.com,Aveen Sathyanath
+SyeFah,Syed Fahad Anis,Syed,Fahad,Consultant,syed.fahad@yash.com,Sudeep Pandey
+PraPra,Pranay Prabodh Chatterjee,Pranay,Prabodh,Associate Lead Consultant,pranay.chatterjee@yash.com,Padmanabha Rao Chilukuri
+PhaAda,Phanindar Adagani,Phanindar,Adagani,Lead Consultant,phanindar.adagani@yash.com,Sekhar Reddy Raaginti
+MuhZaf,Muhammad Zafar Noorul Ameen Sayyed,Muhammad,Zafar,Project Lead,zafar.sayyed@yash.com,Rohit Jamuar
+RajThi,Rajaguru Thiruvettai,Rajaguru,Thiruvettai,Associate General Manager,rajaguru.thiruvettai@yash.com,Dilraj Thevarkandy
+AluRav,Alugoju Ravi Chandra,Alugoju,Ravi,Associate Lead Consultant,ravi.alugoju@yash.com,Hemani Sharma
+ChiH,Chidananda H E,Chidananda,H,Sr. Consultant,chidananda.he@yash.com,Sarvesh M Huddedar
+ManRed,Manikanteswara Reddy Velagala,Manikanteswara,Reddy,Associate Lead Consultant,manikanteswara.v@yash.com,Ramana K V
+PraSax,Prashant Saxena,Prashant,Saxena,Sr. Manager,prashant.saxena@yash.com,Thomas Lijo Sebastian
+RahRan,Rahul Ranjan,Rahul,Ranjan,Consultant,rahul.r@yash.com,Hemani Sharma
+PreShu,Preetesh Shukla,Preetesh,Shukla,Sr. Consultant,preetesh.shukla@yash.com,Aveen Sathyanath
+AveSat,Aveen Sathyanath,Aveen,Sathyanath,Manager,aveen.sathyanath@yash.com,Chandramohan R
+MunYar,Munilakshmi Yarraguravagari,Munilakshmi,Yarraguravagari,Sr. Consultant,y.munilakshmi@yash.com,Sarvesh M Huddedar
+VisKis,Vishal Kisan Chavan,Vishal,Kisan,Consultant,vishal.chavan@yash.com,Prasanna Anand Phadke
+MerPra,Merva Praveen Kumar,Merva,Praveen,Sr. Consultant,mervapraveen.kumar@yash.com,Padmanabha Rao Chilukuri
+VinKir,Vineel Kiran Purimitla,Vineel,Kiran,Associate Lead Consultant,vineel.purimitla@yash.com,Chandramohan R
+AbhSin,Abhishek Singh,Abhishek,Singh,Contractor,abhi.singh@yash.com,Aveen Sathyanath
+MBal,M Balaji,M,Balaji,Consultant,balaji.m@yash.com,Rohit Jamuar
+JayB,Jayaraman B,Jayaraman,B,Sr. Consultant,jayaraman.b@yash.com,Kiran Joshi
+PraKum,Pradeep Kumar M,Pradeep,Kumar,Consultant,pradeep.kumar@yash.com,Vikas Lakhani
+PriK,Priti K Shet,Priti,K,Team Lead,priti.shet@yash.com,Ashwinikumar Subhashchandra Jain
+HarVar,Harsha Vardhan R Vidyapurapu,Harsha,Vardhan,Consultant,harshavardhan.v@yash.com,Aveen Sathyanath
+AshKan,Ashish Kanthed,Ashish,Kanthed,Business Analyst,kanthed.ashish@yash.com,Rakesh Kumar Jain
+AjaHan,Ajaz Hanif,Ajaz,Hanif,Associate General Manager,ajaz.hanif@yash.com,Thomas Lijo Sebastian
+PalAgr,Palak Agrawal,Palak,Agrawal,Associate Consultant,agrawal.palak@yash.com,Ashwinikumar Subhashchandra Jain
+OnkPan,Onkar Pandurang Waghmare,Onkar,Pandurang,Consultant,onkar.waghmare@yash.com,Mantosh Kumar
+DivM,Divya M,Divya,M,Sr. Consultant,divya.m@yash.com,Aveen Sathyanath
+RutBal,Rutuja Balasaheb Handore,Rutuja,Balasaheb,Associate Consultant,rutuja.handore@yash.com,Vishal Kumar Tiwari
+AnuRaj,Anushka Rajesh Shelar,Anushka,Rajesh,Associate Consultant,anushka.shelar@yash.com,Ashwinikumar Subhashchandra Jain
+KesDil,Keshav Diliprao Barad,Keshav,Diliprao,Consultant,keshav.barad@yash.com,Prashant Saxena
+SanSha,Sanket Shantinath Bhojkar,Sanket,Shantinath,Associate Consultant,sanket.bhojkar@yash.com,Medarametla Mallesh
+PraAna,Prasanna Anand Phadke,Prasanna,Anand,Sr. Consultant,prasanna.phadke@yash.com,Aveen Sathyanath
+AraKum,Aravind Kumar Durga N,Aravind,Kumar,Associate Lead Consultant,aravind.durga@yash.com,Ajaz Hanif
+SaiMam,SaiKiran Mamidyala,SaiKiran,Mamidyala,Tech Lead,SaiKiran.Mamidyala@yash.com,Ravi Kiran Nuthakki
+DasNis,Dasari Nischal Sai Pavan,Dasari,Nischal,Consultant,sai.dasari@yash.com,Venkata Subba Reddy Mopuru
+AshSub,Ashwinikumar Subhashchandra Jain,Ashwinikumar,Subhashchandra,Associate General Manager,ashwinikumar.jain@yash.com,Thomas Lijo Sebastian
+RahRad,Rahul Radhakrishnan Kochputhan,Rahul,Radhakrishnan,Consultant,rahul.kochputhan@yash.com,Rohit Jamuar
+TejSin,Tejbir Singh Rana,Tejbir,Singh,Sr. Tech Lead,tejbir.rana@yash.com,Rohit Jamuar
+SarM,Sarvesh M Huddedar,Sarvesh,M,Sr. Manager,sarvesh.huddedar@yash.com,Chandramohan R
+GajMak,Gajibinkar Makkaji,Gajibinkar,Makkaji,Sr. Consultant,makkaji.gajibinkar@yash.com,Anipi Pavan Kumar
+AleHen,Alexson Hentry,Alexson,Hentry,Sr. Consultant,alexson.hentry@yash.com,Anipi Pavan Kumar
+SyeSha,Syed Shafeeq Ahamed,Syed,Shafeeq,Associate Consultant,shafeeq.syed@yash.com,Anipi Pavan Kumar
+AbhKum,Abhijeet Kumar,Abhijeet,Kumar,Associate Consultant,abhijeet.kumar@yash.com,Ashwinikumar Subhashchandra Jain
+PalRaj,Pallala Rajasekhar,Pallala,Rajasekhar,Associate Consultant,pallala.rajasekhar@yash.com,Vikas Lakhani
+KolVen,Kolla Venkata Sandeep,Kolla,Venkata,Sr. Consultant,sandeep.kolla@yash.com,Sekhar Reddy Raaginti
+VisPra,Vishwajeet Pradeep Kadam,Vishwajeet,Pradeep,Consultant,vishwajeet.kadam@yash.com,Vikas Lakhani
+LogRaj,Logesh Raja,Logesh,Raja,Sr. Manager,logesh.raja@yash.com,Thomas Lijo Sebastian
+PraKis,Prasadh Kishor Kulkarni,Prasadh,Kishor,Technical Architect,prasadh.kulkarni@yash.com,Syed Parvez Ali
+KatSri,Katthi Srikanth Reddy,Katthi,Srikanth,Associate Lead Consultant,srikanth.reddy@yash.com,Anipi Pavan Kumar
+MudRav,Mudupu Ravindar Reddy,Mudupu,Ravindar,Sr. Consultant,mudupuravindar.r@yash.com,Roshansingh Vikassingh Deore
+MedMal,Medarametla Mallesh,Medarametla,Mallesh,Sr. Consultant,mallesh.medarametla@yash.com,Padmanabha Rao Chilukuri
+SanAvi,Sandesh Avinash Khatal,Sandesh,Avinash,Consultant,sandesh.khatal@yash.com,Mantosh Kumar
+SagBal,Sagar Balesh Malagave,Sagar,Balesh,Sr. Consultant,sagar.malagave@yash.com,Kiran Joshi
+RacTom,Rachna Tomar,Rachna,Tomar,Consultant,rachna.tomar@yash.com,Chandramohan R
+SunNav,Sunkari Naveen Kumar,Sunkari,Naveen,Consultant,naveen.sunkari@yash.com,Venkata Subba Reddy Mopuru
+VenSub,Venkata Subba Reddy Mopuru,Venkata,Subba,Associate Lead Consultant,venkata.mopuru@yash.com,Padmanabha Rao Chilukuri
+RagVij,Raghav Vijayvargiya,Raghav,Vijayvargiya,Consultant,raghav.vijayvargiya@yash.com,Rajkiran Ukkaji
+ShaRaj,Shastrala Raj Kumar,Shastrala,Raj,Sr. Consultant,rajkumar.shastrala@yash.com,Rajkiran Ukkaji
+SanYad,Sandeep Yadav,Sandeep,Yadav,Associate Consultant,sandeep.yadav@yash.com,Mohammad Javed Idrisi
+DurAvi,Durga Avinash Pallampati,Durga,Avinash,Consultant,avinash.pallampati@yash.com,Rajkiran Ukkaji
+YarRaj,Yarra Raju,Yarra,Raju,Associate Consultant,yarra.raju@yash.com,Anipi Pavan Kumar
+AbdHaj,Abdeali Haji,Abdeali,Haji,Sr. Consultant,haji.abdeali@yash.com,Prashant Saxena
+RahGar,Rahul Gariga,Rahul,Gariga,Consultant,rahul.gariga@yash.com,Ajit Madhusudan Tupe
+RanLax,Ranga Laxman Kumar,Ranga,Laxman,Contractor,laxman.ranga@yash.com,Syed Parvez Ali
+AjiMad,Ajit Madhusudan Tupe,Ajit,Madhusudan,Associate Lead Consultant,ajit.tupe@yash.com,Rakesh Rajgopal
+DarBha,Darshan Bhalchandra Satardekar,Darshan,Bhalchandra,Technical Architect,darshan.satardekar@yash.com,Ramana K V
+RakRaj,Rakesh Rajgopal,Rakesh,Rajgopal,Dy General Manager,rakesh.rajgopal@yash.com,Syed Parvez Ali
+PraKum,Praveen Kumar Ballem,Praveen,Kumar,Associate Consultant,praveen.ballem@yash.com,Dilraj Thevarkandy
+KarPed,Karunakar Peddalagandla,Karunakar,Peddalagandla,Sr. Consultant,karunakar.p@yash.com,Prashant Saxena
+SwaJai,Swarnima Jain,Swarnima,Jain,Consultant,swarnima.jain@yash.com,Syed Parvez Ali
+NalSan,Nallapareddi Sandeepkumar Reddy O,Nallapareddi,Sandeepkumar,Consultant,nallapareddi.s@yash.com,Ajit Madhusudan Tupe
+VenKum,Venkatesh Kumar Tanneeru,Venkatesh,Kumar,Consultant,venkatesh.tanneeru@yash.com,Padmanabha Rao Chilukuri
+VinSur,Vinod Suryakant Mahindrakar,Vinod,Suryakant,Consultant,vinod.mahindrakar@yash.com,Ajit Madhusudan Tupe
+ThoLij,Thomas Lijo Sebastian,Thomas,Lijo,Assistant Vice President,thomas.sebastian@yash.com,Rakesh Kumar Jain
+MohSaa,Mohammed Saad,Mohammed,Saad,Consultant,mohammed.saad@yash.com,Prashant Jain
+TejDee,Tejaswini Deelip Name,Tejaswini,Deelip,Consultant,tejaswini.name@yash.com,Roshansingh Vikassingh Deore
+JakSub,Jakkam Subhash Sailendra,Jakkam,Subhash,Consultant,subhash.jakkam@yash.com,Rajkiran Ukkaji
+KumSri,Kummarikunta Srikanth,Kummarikunta,Srikanth,Consultant,kummarikunta.s@yash.com,Divya M
+VinKum,Vinay Kumar Pothu,Vinay,Kumar,Associate Consultant,vinay.pothu@yash.com,Prashant Jain
+ItrVen,Itreddy Venkata Suresh,Itreddy,Venkata,Sr. Consultant,venkata.itreddy@yash.com,Ajaz Hanif
+SatDas,Satyabrata Das,Satyabrata,Das,Sr. Consultant,satyabrata.das@yash.com,Vikas Kalra
+PraKum,Pradeep Kumar Katuri,Pradeep,Kumar,Tech Lead,pradeep.katuri@yash.com,Ravi Kiran Nuthakki
+KumKee,Kumarraja Keerthipati,Kumarraja,Keerthipati,Sr. Consultant,kumarraja.k@yash.com,Hemani Sharma
+ManKum,Mani Kumar Muthineni,Mani,Kumar,Sr. Consultant,manikumar.muthineni@yash.com,Roshansingh Vikassingh Deore
+SwaJai,Swati Jain,Swati,Jain,Consultant,swati.jain@yash.com,Syed Parvez Ali
+BinRad,Bingi Radha Krishna,Bingi,Radha,Associate Consultant,bingi.radhakrishna@yash.com,Kiran Joshi
+RamBop,Rambabu Boppana,Rambabu,Boppana,Consultant,rambabu.boppana@yash.com,Aravind Kumar Durga N
+BasJan,Basavaraj Jantakal,Basavaraj,Jantakal,Consultant,basavaraj.jantakal@yash.com,Mohammad Javed Idrisi
+DruSim,Druva Simha Kolli,Druva,Simha,Lead Practice Manager,druva.kolli@yash.com,Syed Parvez Ali
+BulMed,Bullireddy Medapati,Bullireddy,Medapati,Sr. Consultant,bullireddy.medapati@yash.com,Vikas Lakhani
+PadRao,Padmanabha Rao Chilukuri,Padmanabha,Rao,Associate General Manager,padmanabha.chilukuri@yash.com,Syed Parvez Ali
+PreJai,Preetham Jain Saragur Abhaykumar,Preetham,Jain,Sr. Consultant,preetham.jain@yash.com,Dilraj Thevarkandy
+JohSun,John Sunil Kumar Sambathini,John,Sunil,Technical Architect,johnsunil.sambathini@yash.com,Syed Parvez Ali
+RVij,R Vijayan,R,Vijayan,Technical Architect,vijayan.r@yash.com,Chandramohan R
+BhaSha,Bhavani Shankar Bandi,Bhavani,Shankar,Associate General Manager,bhavani.bandi@yash.com,Syed Parvez Ali
+NitCha,Nithin Chaitanya Reddy Kothinti,Nithin,Chaitanya,Lead Consultant,nithin.kothinti@yash.com,Chandramohan R
+BhaRed,Bhaskar Reddy Gaddam,Bhaskar,Reddy,Sr. Consultant,bhaskar.gaddam@yash.com,Anipi Pavan Kumar
+VikTal,Vikram Talla,Vikram,Talla,Consultant,vikram.talla@yash.com,Bhavani Shankar Bandi
+PhaRed,Phaniteja Reddy Annem,Phaniteja,Reddy,Sr. Consultant,phaniteja.annem@yash.com,Roshansingh Vikassingh Deore
+RavKum,Ravi Kumar Chandu,Ravi,Kumar,Associate Lead Consultant,ravi.chandu@yash.com,Sarvesh M Huddedar
+DilThe,Dilraj Thevarkandy,Dilraj,Thevarkandy,Sr. Practice Manager,dilraj.thevarkandy@yash.com,Rakesh Kumar Jain
+SriBis,Srikanth Biswal,Srikanth,Biswal,Sr. Consultant,srikanth.biswal@yash.com,Rajkiran Ukkaji
+VikKal,Vikas Kalra,Vikas,Kalra,Associate General Manager,vikas.kalra@yash.com,Thomas Lijo Sebastian
+KriCha,Krishna Chaitanya Gadupa,Krishna,Chaitanya,Sr. Consultant,krishna.gadupa@yash.com,Rajkiran Ukkaji
+VenSat,Venkata Satya Nagaraju Penmatsa,Venkata,Satya,Technical Architect,nagaraju.pvs@yash.com,Dilraj Thevarkandy
+SekRed,Sekhar Reddy Raaginti,Sekhar,Reddy,Technical Architect,sekhar.raaginti@yash.com,Chandramohan R
+SyePar,Syed Parvez Ali,Syed,Parvez,Assistant Vice President,parvez@yash.com,Rakesh Kumar Jain
+RonKon,Rony Konda,Rony,Konda,Sr. Consultant,rony.konda@yash.com,Valery Coucke
+BraWay,Brandon Wayne Love,Brandon,Wayne,Test Engineer,brandon.love@yash.com,Nicholas L Paluch
+AmiKum,Amit Kumar Singh,Amit,Kumar,Sr. Consultant,singh.amit@yash.com,Valery Coucke
+SaiPra,Sai Pravallika Polukonda,Sai,Pravallika,Sr. Consultant,pravallika.p@yash.com,Geogy Philip
+BalVel,Balasantosh Velchicherla,Balasantosh,Velchicherla,Team Lead,santosh.velchicherla@yash.com,Valery Coucke
+RadKri,Radha Krishna Mysa,Radha,Krishna,Team Lead,radha.mysa@yash.com,Valery Coucke
+KatRam,Katla Ramakrishna,Katla,Ramakrishna,Sr. Consultant,ramakrishna.katla@yash.com,Gokul Sunkara Mahendra Babu
+DenMat,Denny Mathew,Denny,Mathew,Sr. Consultant,denny.mathew@yash.com,Gokul Sunkara Mahendra Babu
+AnuKum,Anup Kumar Pandey,Anup,Kumar,PreSales Solution Architect,anup.pandey@yash.com,Valery Coucke
+TanNag,Tanvi Nagariya,Tanvi,Nagariya,Consultant,tanvi.nagariya@yash.com,Aravind Kumar Durga N
+VaiMuk,Vaijanath Mukund Patil,Vaijanath,Mukund,Contractor,vaijanath.patil@yash.com,Rohit Jamuar
+KoyKal,Koya Kalyan,Koya,Kalyan,Associate Consultant,kalyan.koya@yash.com,Medarametla Mallesh
+AqsAsi,Aqsad Asif Sutariya,Aqsad,Asif,Trainee Consultant,aqsad.sutariya@yash.com,Rajkiran Ukkaji
+ShaMas,Shaik Mastan,Shaik,Mastan,Consultant,mastan.shaik@yash.com,Kiran Joshi
+RohMal,Rohini Mallikarjun Sankapal,Rohini,Mallikarjun,Associate Consultant,rohini.sankapal@yash.com,Venkata Subba Reddy Mopuru
+SanAru,Sanket Arun Shelke,Sanket,Arun,Associate Consultant,sanket.shelke@yash.com,Venkata Subba Reddy Mopuru
+KriSag,Krishna Sagar Narnindi,Krishna,Sagar,Consultant,krishna.narnindi@yash.com,Anil Kumar Thangudu
+SarSre,Sarella Sreshta,Sarella,Sreshta,Associate Consultant,sreshta.sarella@yash.com,Ashwinikumar Subhashchandra Jain
+KunMal,Kunal Mali,Kunal,Mali,Associate Consultant,kunal.mali@yash.com,Vishal Kumar Tiwari
+RiyBab,Riya Baburaj,Riya,Baburaj,Associate Consultant,riya.baburaj@yash.com,Ashwinikumar Subhashchandra Jain
+HriPat,Hritik Patidar,Hritik,Patidar,Associate Consultant,hritik.patidar@yash.com,Bhavani Shankar Bandi
+AkaAsh,Akash Ashok Naik,Akash,Ashok,Technical Architect,akash.naik@yash.com,Rakesh Rajgopal
+RavKan,Ravichandran Kannan,Ravichandran,Kannan,Contractor,ravichandran.kannan@yash.com,Narendar Reddy Goli
+VinKam,Vinay Kamarsu,Vinay,Kamarsu,Contractor,vinay.kamarsu@yash.com,Ajaz Hanif
+AntTro,Anthony Troy Schaeffer,Anthony,Troy,Lead Test Engineer,anthony.schaeffer@yash.com,Nicholas L Paluch
+AmaHar,Aman Harvir Singh Chauhan,Aman,Harvir,Consultant,aman.chauhan@yash.com,Divya M
+YasRoh,Yashodhan Rohit Maslekar,Yashodhan,Rohit,Associate Consultant,yashodhan.maslekar@yash.com,Medarametla Mallesh
+PurDil,Purva Dilip Kadam,Purva,Dilip,Trainee Programmer,purva.kadam@yash.com,Venkata Subba Reddy Mopuru
+MirPra,Miraj Pradip Mahajan,Miraj,Pradip,Associate Consultant,miraj.mahajan@yash.com,Rakesh Rajgopal
+ShiKas,Shivraj Kashinath Jadhav,Shivraj,Kashinath,Associate Consultant,shivraj.jadhav@yash.com,Medarametla Mallesh
+SamKar,Sammeta Karthik,Sammeta,Karthik,Consultant,karthik.sammeta@yash.com,Vikas Lakhani
+PraSab,Prashanth Sabbani,Prashanth,Sabbani,Consultant,prashanth.sabbani@yash.com,Vicky Harakhchand Chheda
+GulKum,Gulshan Kumar,Gulshan,Kumar,Associate Consultant,kumar.gulshan@yash.com,Kiran Joshi
+PinSai,Pinninti Sairam,Pinninti,Sairam,Contractor,pinninti.sairam@yash.com,Dilraj Thevarkandy
+PiyUme,Piyush Umesh Dusane,Piyush,Umesh,Associate Consultant,piyush.dusane@yash.com,Arpit Tater
+VikSha,Vikash Sharma,Vikash,Sharma,Associate Consultant,vikash.sharma@yash.com,Ayush Singh
+ChiChi,Chintha Chinnayya,Chintha,Chinnayya,Associate Consultant,chinnayya.chintha@yash.com,Rakesh Rajgopal
+RisKum,Rishabh Kumar Dubey,Rishabh,Kumar,Associate Consultant,rishabh.dubey@yash.com,Ayush Singh
+SriVij,Sriram Vijay Kumar,Sriram,Vijay,Associate Lead Consultant,sriram.vijay@yash.com,Dilraj Thevarkandy
+NikKha,Nikunjkumar Khandar,Nikunjkumar,Khandar,Software Engineer,nikunj.khandar@yash.com,Devesh Kumar Neema
+AniPav,Anipi Pavan Kumar,Anipi,Pavan,Associate Lead Consultant,pavan.anipi@yash.com,Chandramohan R
+BogKee,Boga Keerthana,Boga,Keerthana,Software Engineer,keerthana.boga@yash.com,Gokada Mohan
+YatPre,Yatin Premji Karani,Yatin,Premji,Sr. Consultant,yatin.karani@yash.com,Hazari Mohit Raj
+DinKum,Dinesh Kumar Dewangan,Dinesh,Kumar,Associate Lead Consultant,dinesh.dewangan@yash.com,Rakesh Rajgopal
+LinMal,Lingam Malleswara Rao,Lingam,Malleswara,Contractor,lingam.malleswara@yash.com,Jyotsna Hota
+PusKum,Pushkar Kumar Thakur,Pushkar,Kumar,Associate Consultant,pushkar.thakur@yash.com,Ayush Singh
+MehHas,Mehandi Hasan Khan,Mehandi,Hasan,Lead Consultant,mehandi.khan@yash.com,Rakesh Rajgopal
+JyoSwa,Jyothula Swathi,Jyothula,Swathi,Consultant,swathi.jyothula@yash.com,Ravi Kumar Chandu
+ShrNan,Shruti Nandkishor Ramteke,Shruti,Nandkishor,Associate Consultant,shruti.ramteke@yash.com,Prasanna Anand Phadke
+ShrSur,Shreeyash Suresh Kolte,Shreeyash,Suresh,Associate Consultant,shreeyash.kolte@yash.com,Prasanna Anand Phadke
+VelNag,Velagacharla Nagur Babu,Velagacharla,Nagur,Associate Consultant,nagurbabu.v@yash.com,Sudeep Pandey
+PusJag,Pusuluri Jagadeesh,Pusuluri,Jagadeesh,Consultant,jagadeesh.pusuluri@yash.com,Ravi Kumar Chandu
+PraSan,Pranali Sanjay Patil,Pranali,Sanjay,Associate Consultant,patil.pranali@yash.com,Dilraj Thevarkandy
+MedSra,Medaramitta Sravani,Medaramitta,Sravani,Consultant,sravani.medaramitta@yash.com,Vicky Harakhchand Chheda
+MarAda,Mark Adam Szilagyi Lukacs,Mark,Adam,Contractor,mark.szilagyi@yash.com,Aveen Sathyanath
+PraKun,Prasad Kundalik Thopte,Prasad,Kundalik,Associate Consultant,prasad.thopte@yash.com,Aravind Kumar Durga N
+CPra,C Pravallika,C,Pravallika,Consultant,pravallika.c@yash.com,Vicky Harakhchand Chheda
+LCla,L Claron,L,Claron,Consultant,claron.l@yash.com,Vicky Harakhchand Chheda
+JitKum,Jitendra Kumar Padhi,Jitendra,Kumar,Solution Architect,jitendra.padhi@yash.com,Rakesh Rajgopal
+FaiAhm,Faizan Ahmed Ansarahmed Sayyed,Faizan,Ahmed,Consultant,faizan.sayyed@yash.com,Sudeep Pandey
+RavPho,Ravinder Phogat,Ravinder,Phogat,Associate Lead Consultant,ravinder.phogat@yash.com,Kiran Joshi
+VisS,Vishal S,Vishal,S,Consultant,vishal.s@yash.com,Prasanna Anand Phadke
+TapKau,Tapshika Kaur,Tapshika,Kaur,Associate Consultant,tapshika.kaur@yash.com,Ayush Singh
+AyuKum,Ayush Kumar Srivastava,Ayush,Kumar,Consultant,srivastava.ayush@yash.com,Ayush Singh
+JogRam,Jogi Ram Prasad,Jogi,Ram,Consultant,ramprasad.jogi@yash.com,Hemani Sharma
+DanEdu,Daniel Eduardo Sanchez,Daniel,Eduardo,Data Engineer,daniel.montiel@yash.com,Aveen Sathyanath
+AlbJos,Alberto Jose Jimenez,Alberto,Jose,Contractor,alberto.jimenez@yash.com,Narendar Reddy Goli
+AppRaj,Appireddy Rajasekhar Reddy,Appireddy,Rajasekhar,Trainee Consultant,rajasekhar.appireddy@yash.com,Roshansingh Vikassingh Deore
+KarSun,Karnati Sunkugari Siva Sena Reddy,Karnati,Sunkugari,Consultant,siva.karnati@yash.com,Sudeep Pandey
+SwaRam,Swapnil Rameshwar Jumale,Swapnil,Rameshwar,Associate Lead Consultant,swapnil.jumale@yash.com,Praveen Kumar Pallagutta
+ChiNav,Chinnasetty Naveen Kumar Varma,Chinnasetty,Naveen,Consultant,naveen.chinnasetty@yash.com,Nithin Chaitanya Reddy Kothinti
+GSun,G Sunil Kumar,G,Sunil,Trainee Consultant,sunil.g@yash.com,Prashant Jain
+SamPre,Sampangi Premchand,Sampangi,Premchand,Consultant,premchand.sampangi@yash.com,Prashant Saxena
+LanTul,Lanka Tulasilakshmi,Lanka,Tulasilakshmi,Associate Consultant,tulasilakshmi.lanka@yash.com,Prashant Saxena
+BRam,B Ramesh,B,Ramesh,Sr. Consultant,ramesh.b@yash.com,Prashant Saxena
+EdwJos,Edwin Jose,Edwin,Jose,Trainee Consultant,edwin.jose@yash.com,Prashant Saxena
+VLak,V Lakshman,V,Lakshman,Associate Consultant,lakshman.v@yash.com,Hazari Mohit Raj
+KyaUma,Kyama Umamaheswari,Kyama,Umamaheswari,Associate Consultant,umamaheswari.kyama@yash.com,Vineel Kiran Purimitla
+SurThi,Sura Thirupathi Reddy,Sura,Thirupathi,Associate Consultant,thirupathi.sura@yash.com,Hazari Mohit Raj
+FahBin,Fahad Bin Osman Bawazir,Fahad,Bin,Consultant,fahad.bawazir@yash.com,Hazari Mohit Raj
+MohAbb,Mohsin Abbas,Mohsin,Abbas,Trainee Consultant,abbas.mohsin@yash.com,Mohammad Javed Idrisi
+NouBeg,Noushad Begum S,Noushad,Begum,Associate Consultant,noushad.s@yash.com,Hazari Mohit Raj
+KokSum,Kokkula Suman,Kokkula,Suman,Consultant,suman.kokkula@yash.com,Prashant Saxena
+MadSur,Maddela Surender,Maddela,Surender,Consultant,surender.maddela@yash.com,Vineel Kiran Purimitla
+SudPra,Sudarshana Pradip Patil,Sudarshana,Pradip,Consultant,sudarshana.patil@yash.com,Hazari Mohit Raj
+SujKum,Sujit Kumar Sahoo,Sujit,Kumar,Sr. Consultant,sujit.sahoo@yash.com,Vineel Kiran Purimitla
+AruKum,Arun Kumar,Arun,Kumar,Module Lead,arun.ku@yash.com,Praveen Kumar Pallagutta
+MotYug,Moturi Yugesh,Moturi,Yugesh,Consultant,yugesh.m@yash.com,Hazari Mohit Raj
+NarRaj,Narahari Raju G.,Narahari,Raju,Sr. Consultant,narahari.raju@yash.com,Vicky Harakhchand Chheda
+BodKir,Boddepalli Kiran Kumar,Boddepalli,Kiran,Sr. Consultant,kiran.boddepalli@yash.com,Prashant Saxena
+VaiDos,Vaishali Doshi,Vaishali,Doshi,Associate Consultant,vaishali.doshi@yash.com,B Ramesh
+BanHar,Bandameedi Harshitha Reddy,Bandameedi,Harshitha,Associate Consultant,harshitha.b@yash.com,Nithin Chaitanya Reddy Kothinti
+RafIly,Rafiya Ilyas,Rafiya,Ilyas,Associate Consultant,rafiya.ilyas@yash.com,Prashant Saxena
+AdaShr,Adagani Shravya,Adagani,Shravya,Associate Consultant,shravya.adagani@yash.com,Sekhar Reddy Raaginti
+PriRam,Priya Ramesh Saste,Priya,Ramesh,Associate Consultant,priya.saste@yash.com,Prasanna Anand Phadke
+PiyAsh,Piyush Ashok Bhagwatkar,Piyush,Ashok,Consultant,piyush.bhagwatkar@yash.com,Vikas Lakhani
+AntJos,Anthony Joseph Wilson,Anthony,Joseph,Consultant,anthony.wilson@yash.com,Kapil Champawat
+SouPau,Soubitra Paul,Soubitra,Paul,Associate Consultant,soubitra.paul@yash.com,Hazari Mohit Raj
+FerBuk,Fernand Bukuru,Fernand,Bukuru,Contractor,fernand.bukuru@yash.com,Valery Coucke
+PriKum,Priyanka Kumari,Priyanka,Kumari,Associate Consultant,priyanka.kumari@yash.com,Prashant Saxena
+RavBor,Ravi Borana,Ravi,Borana,Consultant,ravi.borana@yash.com,Dilraj Thevarkandy
+AbdSal,Abdul Salam Abdullah Basha,Abdul,Salam,Associate Lead Consultant,abdul.basha@yash.com,Aveen Sathyanath
+YasCha,Yashika Chauhan,Yashika,Chauhan,Associate Consultant,yashika.chauhan@yash.com,Sekhar Reddy Raaginti
+JibJos,Jibin Joseph,Jibin,Joseph,Sr. Consultant,joseph.jibin@yash.com,Mohammad Javed Idrisi
+RodR,Rodneil R Harris,Rodneil,R,Contractor,rodneil.harris@yash.com,Abhishek Pandey
+DhaRed,Dhanunjaya Reddy Konasani,Dhanunjaya,Reddy,Contractor,dhanunjaya.konasani@yash.com,Ajaz Hanif
+VinNar,Vinoth Narayanan,Vinoth,Narayanan,Sr. Consultant,vinoth.n@yash.com,Prashant Saxena
+EdwTho,Edwin Thomas,Edwin,Thomas,Consultant,thomas.edwin@yash.com,Vineel Kiran Purimitla
+ArpSat,Arpit Satish Yeole,Arpit,Satish,Associate Consultant,arpit.yeole@yash.com,Aveen Sathyanath
+RajGov,Rajavarapu Govardhan,Rajavarapu,Govardhan,Associate Consultant,govardhan.rajavarapu@yash.com,Vikas Lakhani
+GuvRam,Guvva Ramesh,Guvva,Ramesh,Consultant,guvva.ramesh@yash.com,Prashant Saxena
+ManK,Manjushri K,Manjushri,K,Consultant,manjushri.k@yash.com,Hemani Sharma
+KeeS,Keerthi S L,Keerthi,S,Consultant,keerthi.s@yash.com,Kiran Joshi
+ShiLax,Shital Laxman Auti,Shital,Laxman,Contractor,shital.auti@yash.com,Ashwinikumar Subhashchandra Jain
+ChuRav,Chundru Ravindra,Chundru,Ravindra,Consultant,ravindra.chundru@yash.com,Vikas Lakhani
+MohHan,Mohd Haneef Khan,Mohd,Haneef,Consultant,haneef.khan@yash.com,Vineel Kiran Purimitla
+NavKum,Naveen Kumar G,Naveen,Kumar,Sr. Consultant,g.naveen@yash.com,Prashant Saxena
+AviPan,Avilash Panda,Avilash,Panda,Sr. Consultant,avilash.panda@yash.com,Nithin Chaitanya Reddy Kothinti
+KanSri,Kandula Srinivasa Rao,Kandula,Srinivasa,Consultant,srinivasa.kandula@yash.com,Vikas Lakhani
+EdiUme,Ediga Umesh Chandra,Ediga,Umesh,Associate Consultant,umesh.ediga@yash.com,Mohammad Javed Idrisi
+AshGoe,Ashu Goel,Ashu,Goel,Consultant,ashu.goel@yash.com,Prashant Saxena
