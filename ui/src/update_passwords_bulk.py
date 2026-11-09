@@ -1,10 +1,9 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import requests
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-SNOW_URL = 'https://dev364281.service-now.com'
-AUTH_DATA = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
 TARGET_PASSWORD = 'P@ssw0rd'
 
 def get_auth_session():
@@ -27,7 +26,7 @@ def main():
     start_time = time.time()
     
     session = get_auth_session()
-    print("Authenticated successfully with ServiceNow instance dev364281.")
+    print("Authenticated successfully with ServiceNow configured instance.")
 
     # 1. Fetch all users with email @yash.com
     r_users = session.get(f"{SNOW_URL}/api/now/table/sys_user?sysparm_query=emailLIKE@yash.com&sysparm_limit=1000&sysparm_fields=sys_id,user_name,name,email")

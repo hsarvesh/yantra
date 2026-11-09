@@ -16,7 +16,14 @@ import {
   testLlmConfiguration,
   generateLlmCompletion,
   updateTicketStateAndComments,
-  evaluateTicketWithAi
+  evaluateTicketWithAi,
+  readSoulMemory,
+  commitSoulDecision,
+  createSoulRule,
+  updateSoulRule,
+  deleteSoulRule,
+  updateSoulMemoryContent,
+  interactiveLlmChat
 } from './serverSnowClient.js';
 
 function snowApiPlugin() {
@@ -24,6 +31,17 @@ function snowApiPlugin() {
     name: 'snow-api-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        if (req.url === '/api/snow/config' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({
+            success: true,
+            instanceUrl: process.env.SNOW_INSTANCE_URL || '',
+            username: process.env.SNOW_USERNAME || '',
+            hasPassword: !!process.env.SNOW_PASSWORD
+          }));
+          return;
+        }
+
         if (req.url === '/api/snow/list') {
           try {
             const data = await listServiceNowRequests(15);
@@ -343,6 +361,113 @@ function snowApiPlugin() {
             try {
               const payload = JSON.parse(body || '{}');
               const result = await generateLlmCompletion(payload);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // ==========================================
+        // SOUL MEMORY & INTERACTIVE LLM ENDPOINTS
+        // ==========================================
+
+        if (req.url === '/api/soul/read' && req.method === 'GET') {
+          try {
+            const data = readSoulMemory();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+          } catch (err) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if ((req.url === '/api/soul/commit-decision' || req.url === '/api/soul/create-rule') && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              const result = createSoulRule(payload);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        if (req.url === '/api/soul/update-rule' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              const result = updateSoulRule(payload);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        if (req.url === '/api/soul/delete-rule' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              const result = deleteSoulRule(payload.id);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        if (req.url === '/api/soul/update' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              const result = updateSoulMemoryContent(payload.content || '');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        if (req.url === '/api/llm/interactive-chat' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              const result = await interactiveLlmChat(payload);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
             } catch (err) {

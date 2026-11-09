@@ -1,0 +1,118 @@
+# ==============================================================================
+# YANTRA AUTONOMOUS ITIL ORCHESTRATION & EXECUTION PLATFORM
+# LOCAL SOUL MEMORY & EVOLVING KNOWLEDGE BASE (soul.txt)
+# ==============================================================================
+# This file stores persistent, episodic and semantic memory derived from engineer
+# decisions, manual overrides, and operational policies across ITIL stages.
+# The Local AI Engine reads this file dynamically on every ticket evaluation,
+# ensuring the platform continuously adapts and adheres to team preferences.
+#
+# Storage Format:
+# [DECISION_RECORD]
+# ID: Unique Rule Identifier (e.g. RULE-20261109-001)
+# TIMESTAMP: ISO-8601 Timestamp of Decision
+# STAGE: Operational Stage (e.g. Triage Routing, Parameter Qualification, Runbook)
+# TICKET: Target Ticket / Work Item Reference
+# CRITERIA: Condition triggering this rule
+# DEFAULT_RECOMMENDATION: What AI or base taxonomy initially suggested
+# ENGINEER_DECISION: The override or choice made by the engineer
+# RULE: The generalized operational rule to remember and enforce
+# REASON: The engineer's technical rationale
+# AUTHOR: Engineer Name / Platform Role
+# ==============================================================================
+
+# --- SECTION 1: ITIL TAXONOMY & ASSIGNMENT ROUTING RULES ---
+
+[DECISION_RECORD]
+ID: RULE-INIT-001
+TIMESTAMP: 2026-11-09T12:00:00+05:30
+STAGE: Triage / Assignment Routing
+TICKET: BASELINE-POLICY
+CRITERIA: Service restart requested for IIS, Web servers, or Application daemons (e.g. W3SVC, Tomcat, Kestrel)
+DEFAULT_RECOMMENDATION: Server Infrastructure (OS Team)
+ENGINEER_DECISION: Application Support
+RULE: When a service restart is requested for web services or application runtimes (e.g. IIS / W3SVC), route directly to Application Support instead of the OS / Server Infrastructure team.
+REASON: Web application service restarts directly impact application availability and end-user transactions; application engineers must validate pools and monitor recovery.
+AUTHOR: Platform Administrator
+
+[DECISION_RECORD]
+ID: RULE-INIT-002
+TIMESTAMP: 2026-11-09T12:05:00+05:30
+STAGE: Triage / Assignment Routing
+TICKET: BASELINE-POLICY
+CRITERIA: Database engine recycling or query lock remediation (e.g. MSSQLSERVER, PostgreSQL, Oracle)
+DEFAULT_RECOMMENDATION: Server Infrastructure
+ENGINEER_DECISION: Application Support
+RULE: Database service restarts and engine recycles must be routed to Application Support / DBA team rather than OS infrastructure.
+REASON: Database recovery requires transaction log validation and active lock checks by application database specialists.
+AUTHOR: Platform Administrator
+
+# --- SECTION 2: PARAMETER QUALIFICATION & CMDB VALIDATION RULES ---
+
+[DECISION_RECORD]
+ID: RULE-INIT-003
+TIMESTAMP: 2026-11-09T12:10:00+05:30
+STAGE: Parameter Qualification
+TICKET: BASELINE-POLICY
+CRITERIA: Hostname starts with 'BLR-APP-' or 'PNE-APP-'
+DEFAULT_RECOMMENDATION: Parameter validation required
+ENGINEER_DECISION: Automatically resolve default service W3SVC if unspecified
+RULE: If target CI is an enterprise Application Server (BLR-APP-* or PNE-APP-*) and service is unspecified, assume primary daemon is W3SVC.
+REASON: Standard corporate baseline designates W3SVC as primary worker on all enterprise Windows application tiers.
+AUTHOR: Platform Administrator
+
+# --- SECTION 3: HUMAN-IN-THE-LOOP & SAFETY GOVERNANCE RULES ---
+
+[DECISION_RECORD]
+ID: RULE-INIT-004
+TIMESTAMP: 2026-11-09T12:15:00+05:30
+STAGE: Runbook Automation Execution
+TICKET: BASELINE-POLICY
+CRITERIA: Production environment CIs (e.g. PRD-*, DC-001)
+DEFAULT_RECOMMENDATION: Automatic execution without gate
+ENGINEER_DECISION: Require human confirmation and pre-flight socket verification
+RULE: Production tier CIs strictly require engineer interactive approval before initiating service shutdown phases.
+REASON: Zero unplanned outages policy under enterprise ITIL change management.
+AUTHOR: Platform Administrator
+
+# ==============================================================================
+# DYNAMICALLY EVOLVING DECISIONS LOGGED BELOW
+# ==============================================================================
+
+[DECISION_RECORD]
+ID: RULE-MW95PZKY-942
+TIMESTAMP: 2026-11-09T11:07:31.042Z
+STAGE: Triage / Assignment Routing
+TICKET: INC0010042
+CRITERIA: Service restart requested for Nginx or Apache
+DEFAULT_RECOMMENDATION: Server Infrastructure
+ENGINEER_DECISION: Application Support
+RULE: When an engineer requests web proxy service restart, assign to Application Support team.
+REASON: Application team owns reverse proxy virtual host mappings.
+AUTHOR: Sarvesh Huddedar
+
+[DECISION_RECORD]
+ID: RULE-MW964VIR-284
+TIMESTAMP: 2026-11-09T11:19:05.619Z
+STAGE: Triage / Assignment Routing
+TICKET: RITM0010026
+CRITERIA: Service restart requested for Redis cache daemons
+DEFAULT_RECOMMENDATION: Server Infrastructure (OS Team)
+ENGINEER_DECISION: Application Support
+RULE: When a service restart is requested for Redis cache clusters, route to Application Support instead of Server Infrastructure.
+REASON: Redis keyspace invalidation directly impacts customer sessions and checkout workflows.
+AUTHOR: Sarvesh Huddedar (Engineer)
+
+[DECISION_RECORD]
+ID: RULE-MW96RAH2-645
+TIMESTAMP: 2026-11-09T11:36:31.430Z
+STAGE: Triage / Assignment Routing
+TICKET: INC0010012
+CRITERIA: Service restart requested for W3SVC (CI: BLR-APP-001)
+DEFAULT_RECOMMENDATION: Server Support
+ENGINEER_DECISION: Server Infrastructure
+RULE: When a service restart is requested for W3SVC, route to Server Support.
+REASON: Service restarts on W3SVC daemons directly affect users and require Server Infra team verification. Application teams does not have Permissions to restart this service except Application Servers.
+AUTHOR: Sarvesh Huddedar (Engineer)
+
+

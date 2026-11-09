@@ -1,3 +1,4 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -584,7 +585,7 @@ def build_inventory():
     ws_sum = wb.create_sheet(title='CMDB_Summary_Metrics', index=0)
     sum_header_font = Font(name='Segoe UI', size=14, bold=True, color='0F172A')
     ws_sum.cell(row=2, column=2, value="Enterprise CMDB Inventory Summary").font = sum_header_font
-    ws_sum.cell(row=3, column=2, value="Configured for ServiceNow Instance dev364281 (Total CIs: 2,815)").font = Font(name='Segoe UI', size=11, color='64748B')
+    ws_sum.cell(row=3, column=2, value="Configured for ServiceNow Instance Enterprise (Total CIs: 2,815)").font = Font(name='Segoe UI', size=11, color='64748B')
 
     metrics_headers = ['Device / CI Category', 'Target ServiceNow Table', 'Count', 'Primary Distribution', 'Assigned Support Group']
     for col_idx, h in enumerate(metrics_headers, 2):

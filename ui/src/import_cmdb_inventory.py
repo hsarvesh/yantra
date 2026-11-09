@@ -1,3 +1,4 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import openpyxl
 import requests
 import re
@@ -5,8 +6,6 @@ import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-SNOW_URL = 'https://dev364281.service-now.com'
-AUTH_DATA = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
 EXCEL_PATH = r'D:\dev\YASH\Yantra\ui\Enterprise_CMDB_Inventory.xlsx'
 
 thread_local = threading.local()
@@ -39,7 +38,7 @@ def get_worker_session(main_session, token):
     return thread_local.session
 
 def main():
-    print("=== Starting Enterprise CMDB Inventory Import to ServiceNow dev364281 ===")
+    print("=== Starting Enterprise CMDB Inventory Import to ServiceNow ===")
     total_start = time.time()
     main_session, token = get_auth_session()
     print("Authenticated successfully with ServiceNow.")

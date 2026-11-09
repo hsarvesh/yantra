@@ -1,11 +1,10 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import csv
 import re
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-SNOW_URL = 'https://dev364281.service-now.com'
-AUTH_DATA = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
 CSV_PATH = r'D:\dev\YASH\Yantra\ui\EMP_list.csv'
 
 def get_auth_session():

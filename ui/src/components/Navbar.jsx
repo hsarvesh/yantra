@@ -68,7 +68,7 @@ export default function Navbar({ currentRole, setCurrentRole, customerEnv, setCu
               </Typography>
               <Chip
                 size="small"
-                label="dev364281 (Zurich Patch 10)"
+                label={`${(import.meta.env?.VITE_SNOW_INSTANCE_URL || 'ServiceNow').replace(/^https?:\/\//, '').replace(/\.service-now\.com.*$/, '')} (Connected)`}
                 sx={{
                   height: 20,
                   fontSize: '0.68rem',

@@ -285,9 +285,9 @@ export default function ServiceNowGeneratorView({ onSampleCreated }) {
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0369a1' }}>
-                  Connected to: https://dev364281.service-now.com
+                  Connected to: {(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL) || 'Configured ServiceNow Instance'}
                 </Typography>
-                <Chip size="small" label="Authenticated as admin" color="success" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }} />
+                <Chip size="small" label={`Authenticated as ${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_USERNAME) || 'admin'}`} color="success" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }} />
               </Box>
               <Typography variant="caption" sx={{ color: '#0284c7', display: 'block' }}>
                 Active REST API Target: <code>sc_request</code> (Parent) &amp; <code>sc_req_item</code> (Requested Item with operational metadata)
@@ -300,7 +300,7 @@ export default function ServiceNowGeneratorView({ onSampleCreated }) {
             variant="outlined"
             color="primary"
             endIcon={<OpenInNewOutlined />}
-            href="https://dev364281.service-now.com/nav_to.do?uri=sc_req_item_list.do"
+            href={`${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : '').replace(/\/+$/, '')}/nav_to.do?uri=sc_req_item_list.do`}
             target="_blank"
             rel="noopener noreferrer"
             sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: '#ffffff' }}
@@ -501,7 +501,7 @@ export default function ServiceNowGeneratorView({ onSampleCreated }) {
               Live Populated Records in ServiceNow (`sc_req_item`)
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              Direct live query from table `sc_req_item` on instance dev364281. Click any record to inspect directly in ServiceNow.
+              Direct live query from table `sc_req_item` on ServiceNow. Click any record to inspect directly in ServiceNow.
             </Typography>
           </Box>
           <Chip

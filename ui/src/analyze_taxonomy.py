@@ -1,3 +1,4 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import openpyxl
 
 wb = openpyxl.load_workbook(r'D:\dev\YASH\Yantra\ui\Enterprise_ITSM_Taxonomy.xlsx', data_only=True)

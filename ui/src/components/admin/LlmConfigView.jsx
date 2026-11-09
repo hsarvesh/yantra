@@ -20,7 +20,11 @@ import {
   Paper,
   CircularProgress,
   Tooltip,
-  Divider
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   PsychologyOutlined,
@@ -41,16 +45,23 @@ import {
   CodeOutlined,
   TuneOutlined,
   LockOutlined,
-  TerminalOutlined
+  TerminalOutlined,
+  MemoryOutlined,
+  AddCircleOutline,
+  EditOutlined,
+  DeleteOutline,
+  SearchOutlined,
+  CloseOutlined,
+  SchoolOutlined
 } from '@mui/icons-material';
 
 const STORAGE_KEY = 'yantra_llm_config_v1';
 
 export const defaultLlmConfig = {
-  provider: 'lmstudio',
-  endpointUrl: 'http://localhost:1234/v1',
+  provider: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_LOCAL_AI_PROVIDER) || 'custom_local',
+  endpointUrl: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_LOCAL_AI_ENDPOINT) || 'http://localhost:8080/v1',
   apiKey: '',
-  model: 'llama-3.2-3b-instruct',
+  model: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_LOCAL_AI_MODEL) || '/models/Qwen3-0.6B-Q4_K_M-Instruct.gguf',
   temperature: 0.2,
   maxTokens: 600,
   topP: 0.9,
@@ -90,6 +101,21 @@ export const defaultLlmConfig = {
   }
 };
 
+const TAXONOMY_GROUPS = [
+  'Application Support',
+  'Server Infrastructure',
+  'Network Services',
+  'End User Computing',
+  'Access Management',
+  'Cloud Services',
+  'Security',
+  'Email & Collaboration',
+  'Facilities IT',
+  'Monitoring & Operations',
+  'Asset Management',
+  'Telephony'
+];
+
 export default function LlmConfigView({ onNotification }) {
   const [config, setConfig] = useState(defaultLlmConfig);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -108,6 +134,37 @@ export default function LlmConfigView({ onNotification }) {
   const [sandboxRunning, setSandboxRunning] = useState(false);
   const [sandboxOutput, setSandboxOutput] = useState('');
 
+  // Soul Memory (soul.txt) Rules Management State
+  const [soulData, setSoulData] = useState({ rules: [], totalRules: 0, content: '' });
+  const [soulSearchQuery, setSoulSearchQuery] = useState('');
+  const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
+  const [showEditRuleModal, setShowEditRuleModal] = useState(false);
+  const [isSavingRule, setIsSavingRule] = useState(false);
+  const [newRule, setNewRule] = useState({
+    id: '',
+    stage: 'Triage / Assignment Routing',
+    ticketNumber: 'BASELINE-POLICY',
+    criteria: '',
+    defaultRecommendation: 'Server Infrastructure',
+    engineerDecision: 'Application Support',
+    rule: '',
+    reason: '',
+    author: 'Platform Administrator'
+  });
+  const [editingRule, setEditingRule] = useState(null);
+
+  const fetchSoulMemory = async () => {
+    try {
+      const res = await fetch('/api/soul/read');
+      const data = await res.json();
+      if (data.success) {
+        setSoulData(data);
+      }
+    } catch (e) {
+      console.error('Failed to load soul.txt rules:', e);
+    }
+  };
+
   // Localhost Boundary Check
   const isLocalEndpoint = /^(https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\])(:\d+)?/i.test(config.endpointUrl);
 
@@ -116,13 +173,20 @@ export default function LlmConfigView({ onNotification }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setConfig(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed.endpointUrl === 'http://localhost:1234/v1') {
+          parsed.endpointUrl = defaultLlmConfig.endpointUrl;
+          parsed.model = defaultLlmConfig.model;
+          parsed.provider = defaultLlmConfig.provider;
+        }
+        setConfig(prev => ({ ...prev, ...parsed }));
       }
     } catch (e) {
       console.warn('Could not read LLM config from localStorage', e);
     }
     // Auto-discover models on mount
     handleDiscoverModels();
+    fetchSoulMemory();
   }, []);
 
   const handleConfigChange = (key, value) => {
@@ -280,9 +344,97 @@ export default function LlmConfigView({ onNotification }) {
     }
   };
 
+  const handleCreateRule = async () => {
+    if (!newRule.rule.trim()) {
+      alert('Operational rule formulation is required.');
+      return;
+    }
+    setIsSavingRule(true);
+    try {
+      const res = await fetch('/api/soul/create-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRule)
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        setShowCreateRuleModal(false);
+        setNewRule({
+          id: '',
+          stage: 'Triage / Assignment Routing',
+          ticketNumber: 'BASELINE-POLICY',
+          criteria: '',
+          defaultRecommendation: 'Server Infrastructure',
+          engineerDecision: 'Application Support',
+          rule: '',
+          reason: '',
+          author: 'Platform Administrator'
+        });
+        alert(`Rule [${data.ruleId}] created successfully in soul.txt!`);
+      } else {
+        alert('Failed to create rule: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Error creating rule: ' + e.message);
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  const handleUpdateRule = async () => {
+    if (!editingRule?.rule?.trim()) {
+      alert('Operational rule formulation is required.');
+      return;
+    }
+    setIsSavingRule(true);
+    try {
+      const res = await fetch('/api/soul/update-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingRule)
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        setShowEditRuleModal(false);
+        alert(`Rule [${editingRule.id}] updated successfully in soul.txt!`);
+      } else {
+        alert('Failed to update rule: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Error updating rule: ' + e.message);
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  const handleDeleteRule = async (ruleId) => {
+    if (!ruleId) return;
+    if (!window.confirm(`Are you sure you want to permanently delete rule [${ruleId}] from soul.txt?\n\nThe Local LLM will no longer use this rule for future evaluations.`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/soul/delete-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ruleId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        alert(`Rule [${ruleId}] deleted successfully from soul.txt!`);
+      } else {
+        alert('Failed to delete rule: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Error deleting rule: ' + e.message);
+    }
+  };
+
   const promptKeys = ['triage', 'routing', 'remediation', 'worknotes'];
-  const currentPromptKey = promptKeys[activePromptTab];
-  const currentPrompt = config.prompts[currentPromptKey];
+  const currentPromptKey = promptKeys[activePromptTab] || 'triage';
+  const currentPrompt = config.prompts[currentPromptKey] || config.prompts.triage;
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: 'auto' }}>
@@ -610,7 +762,7 @@ export default function LlmConfigView({ onNotification }) {
         )}
       </Paper>
 
-      {/* SECTION 3: PROMPT TEMPLATE DIRECTORY (ACTIVITY DIRECTION) */}
+      {/* SECTION 3: PROMPT TEMPLATE DIRECTORY & SOUL MEMORY RULES */}
       <Paper elevation={0} sx={{ borderRadius: 2.5, border: '1px solid #e2e8f0', bgcolor: '#ffffff', overflow: 'hidden' }}>
         <Box sx={{ borderBottom: '1px solid #e2e8f0', px: 2, pt: 1 }}>
           <Tabs
@@ -631,43 +783,426 @@ export default function LlmConfigView({ onNotification }) {
             <Tab icon={<HubOutlined sx={{ fontSize: 18 }} />} iconPosition="start" label="2. Support Group Routing" />
             <Tab icon={<TuneOutlined sx={{ fontSize: 18 }} />} iconPosition="start" label="3. Service Restart Remediation" />
             <Tab icon={<LockOutlined sx={{ fontSize: 18 }} />} iconPosition="start" label="4. ServiceNow Work Notes & SHA-256 Digest" />
+            <Tab icon={<MemoryOutlined sx={{ fontSize: 18, color: '#7c3aed' }} />} iconPosition="start" label={`5. LLM Assignment Rules & Soul Memory (${soulData.totalRules || soulData.rules?.length || 0})`} />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                {currentPrompt.title}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#64748b' }}>
-                {currentPrompt.description}
-              </Typography>
+        {activePromptTab === 4 ? (
+          /* TAB 5: SOUL MEMORY ASSIGNMENT RULES CRUD VIEW */
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                  Persistent LLM Assignment Rules & Episodic Memory (soul.txt)
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Operational decisions recorded here are ingested by the Local LLM during automated routing and execution gates.
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddCircleOutline sx={{ fontSize: 15 }} />}
+                  onClick={() => setShowCreateRuleModal(true)}
+                  sx={{ textTransform: 'none', borderRadius: 1.5, fontWeight: 700, bgcolor: '#7c3aed', '&:hover': { bgcolor: '#6d28d9' } }}
+                >
+                  + Create Assignment Rule
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Refresh sx={{ fontSize: 14 }} />}
+                  onClick={fetchSoulMemory}
+                  sx={{ textTransform: 'none', borderRadius: 1.5 }}
+                >
+                  Refresh Rules
+                </Button>
+              </Box>
             </Box>
 
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={sandboxRunning ? <CircularProgress size={14} /> : <TerminalOutlined />}
-              disabled={sandboxRunning}
-              onClick={() => handleRunSandbox(currentPromptKey)}
-              sx={{ textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
-            >
-              {sandboxRunning ? 'Executing...' : 'Test Prompt with Sample Data'}
-            </Button>
-          </Box>
+            {/* Search Filter */}
+            <Box sx={{ mb: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search assignment rules by keyword, group, CI pattern, or rule ID..."
+                value={soulSearchQuery}
+                onChange={(e) => setSoulSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchOutlined sx={{ fontSize: 18, color: '#64748b', mr: 1 }} />
+                }}
+              />
+            </Box>
 
-          <Grid container spacing={2.5}>
+            {/* Rules Cards List */}
+            <Grid container spacing={2}>
+              {(soulData.rules || [])
+                .filter(r => {
+                  if (!soulSearchQuery.trim()) return true;
+                  const q = soulSearchQuery.toLowerCase();
+                  return (
+                    (r.id || '').toLowerCase().includes(q) ||
+                    (r.stage || '').toLowerCase().includes(q) ||
+                    (r.rule || '').toLowerCase().includes(q) ||
+                    (r.criteria || '').toLowerCase().includes(q) ||
+                    (r.engineerDecision || '').toLowerCase().includes(q) ||
+                    (r.reason || '').toLowerCase().includes(q)
+                  );
+                })
+                .map((r, i) => (
+                  <Grid item xs={12} key={r.id || i}>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        borderColor: '#e2e8f0',
+                        bgcolor: '#ffffff',
+                        transition: 'all 0.15s ease',
+                        '&:hover': { borderColor: '#c084fc', boxShadow: '0 2px 8px rgba(124, 58, 237, 0.08)' }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            size="small"
+                            label={r.id || `RULE-00${i + 1}`}
+                            sx={{ fontWeight: 800, fontSize: '0.72rem', bgcolor: '#f3e8ff', color: '#7c3aed', border: '1px solid #d8b4fe' }}
+                          />
+                          <Chip
+                            size="small"
+                            label={r.stage || 'General'}
+                            variant="outlined"
+                            sx={{ fontSize: '0.68rem', fontWeight: 600, color: '#475569' }}
+                          />
+                          {r.ticketNumber && (
+                            <Chip
+                              size="small"
+                              label={r.ticketNumber}
+                              sx={{ fontSize: '0.65rem', bgcolor: '#f1f5f9', color: '#334155' }}
+                            />
+                          )}
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                          <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.68rem', mr: 0.5 }}>
+                            {r.timestamp ? r.timestamp.substring(0, 10) : 'Active'} • {r.author || 'Administrator'}
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<EditOutlined sx={{ fontSize: 13 }} />}
+                            onClick={() => {
+                              setEditingRule({ ...r });
+                              setShowEditRuleModal(true);
+                            }}
+                            sx={{ textTransform: 'none', fontSize: '0.68rem', fontWeight: 700, py: 0.2, px: 1, borderRadius: 1.2, minWidth: 'auto' }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteOutline sx={{ fontSize: 13 }} />}
+                            onClick={() => handleDeleteRule(r.id)}
+                            sx={{ textTransform: 'none', fontSize: '0.68rem', fontWeight: 700, py: 0.2, px: 1, borderRadius: 1.2, minWidth: 'auto' }}
+                          >
+                            Delete
+                          </Button>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>
+                        📜 {r.rule}
+                      </Typography>
+
+                      <Grid container spacing={1} sx={{ mt: 0.5 }}>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Trigger Criteria:</Typography>
+                          <Typography variant="body2" sx={{ fontSize: '0.78rem', color: '#334155', fontWeight: 600 }}>
+                            {r.criteria || 'N/A'}
+                          </Typography>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Routing Transition:</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" sx={{ fontSize: '0.76rem', color: '#dc2626', textDecoration: 'line-through' }}>
+                              {r.defaultRecommendation || 'Default'}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#64748b' }}>➔</Typography>
+                            <Typography variant="body2" sx={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 800 }}>
+                              {r.engineerDecision || 'Override'}
+                            </Typography>
+                          </Box>
+                        </Grid>
+
+                        {r.reason && (
+                          <Grid item xs={12}>
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Operational Reason:</Typography>
+                            <Typography variant="caption" sx={{ color: '#475569', fontStyle: 'italic', display: 'block' }}>
+                              "{r.reason}"
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Paper>
+                  </Grid>
+                ))}
+            </Grid>
+
+            {/* Raw soul.txt Preview */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
+                RAW DISK FILE PREVIEW (/home/sar/dev/yantra/Yantra/soul.txt):
+              </Typography>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 1.5,
+                  bgcolor: '#0f172a',
+                  color: '#38bdf8',
+                  fontFamily: 'Consolas, Monaco, monospace',
+                  fontSize: '0.72rem',
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                  borderRadius: 1.5,
+                  border: '1px solid #1e293b'
+                }}
+              >
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {soulData.content || '# soul.txt active memory file'}
+                </pre>
+              </Paper>
+            </Box>
+          </Box>
+        ) : (
+          /* TABS 1-4: PROMPT TEMPLATE SANDBOX VIEW */
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                  {currentPrompt.title}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  {currentPrompt.description}
+                </Typography>
+              </Box>
+
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={sandboxRunning ? <CircularProgress size={14} /> : <TerminalOutlined />}
+                disabled={sandboxRunning}
+                onClick={() => handleRunSandbox(currentPromptKey)}
+                sx={{ textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
+              >
+                {sandboxRunning ? 'Executing...' : 'Test Prompt with Sample Data'}
+              </Button>
+            </Box>
+
+            <Grid container spacing={2.5}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="System Prompt / Persona"
+                  value={currentPrompt.systemPrompt}
+                  onChange={(e) => handlePromptChange(currentPromptKey, 'systemPrompt', e.target.value)}
+                  size="small"
+                  helperText="Defines the behavior, governance boundaries, and persona of the local model"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={7}
+                  label="User Prompt Template (Supports Dynamic Placeholders)"
+                  value={currentPrompt.template}
+                  onChange={(e) => handlePromptChange(currentPromptKey, 'template', e.target.value)}
+                  sx={{
+                    fontFamily: 'Consolas, Monaco, monospace',
+                    '& textarea': { fontFamily: 'Consolas, Monaco, monospace', fontSize: '0.82rem' }
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
+                    AVAILABLE DYNAMIC TAGS:
+                  </Typography>
+                  {currentPrompt.variables.map(tag => (
+                    <Chip
+                      key={tag}
+                      label={tag}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.72rem', height: 22 }}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+
+              {/* Live Prompt Sandbox Output */}
+              {sandboxOutput && (
+                <Grid item xs={12}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: '#0f172a',
+                      color: '#38bdf8',
+                      border: '1px solid #1e293b'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, borderBottom: '1px solid #334155', pb: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>
+                        LOCAL MODEL GENERATION OUTPUT [{config.model}]
+                      </Typography>
+                      <Chip size="small" label="Evaluated" color="success" sx={{ height: 16, fontSize: '0.62rem', fontWeight: 700 }} />
+                    </Box>
+                    <Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.78rem', color: '#f8fafc' }}>
+                      {sandboxOutput}
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        )}
+      </Paper>
+
+      {/* DIALOG: CREATE SOUL MEMORY RULE */}
+      <Dialog open={showCreateRuleModal} onClose={() => setShowCreateRuleModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AddCircleOutline sx={{ color: '#7c3aed' }} />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Create New LLM Assignment Rule (soul.txt)
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setShowCreateRuleModal(false)}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2.5 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
+            Define a persistent rule in <code>soul.txt</code>. When tickets match the specified criteria, the Local LLM engine will adhere to this decision rule.
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Rule ID (Optional / Auto-generated)"
+                value={newRule.id}
+                onChange={(e) => setNewRule({ ...newRule, id: e.target.value })}
+                placeholder="Leave blank to auto-generate"
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Operational Stage"
+                value={newRule.stage}
+                onChange={(e) => setNewRule({ ...newRule, stage: e.target.value })}
+                SelectProps={{ native: true }}
+              >
+                <option value="Triage / Assignment Routing">Stage 1: Triage / Assignment Routing</option>
+                <option value="Parameter Gate / Missing Info">Stage 2: Parameter Gate / Missing Info</option>
+                <option value="Execution / Runbook SOP">Stage 3: Runbook Automation Execution</option>
+                <option value="Post-Execution Synthesis">Stage 4: Post-Execution Synthesis & SNow Commit</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Author / Creator"
+                value={newRule.author}
+                onChange={(e) => setNewRule({ ...newRule, author: e.target.value })}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Trigger Criteria / Condition"
+                value={newRule.criteria}
+                onChange={(e) => setNewRule({ ...newRule, criteria: e.target.value })}
+                placeholder="e.g. Service restart requested for IIS Web services"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Ticket Reference / Pattern"
+                value={newRule.ticketNumber}
+                onChange={(e) => setNewRule({ ...newRule, ticketNumber: e.target.value })}
+                placeholder="e.g. BASELINE-POLICY or RITM0010026"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Default System Recommendation"
+                value={newRule.defaultRecommendation}
+                onChange={(e) => setNewRule({ ...newRule, defaultRecommendation: e.target.value })}
+                placeholder="e.g. Server Infrastructure (OS Team)"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              {newRule.stage.includes('Routing') ? (
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Assignment Group"
+                  value={newRule.engineerDecision}
+                  onChange={(e) => setNewRule({ ...newRule, engineerDecision: e.target.value })}
+                  SelectProps={{ native: true }}
+                >
+                  {TAXONOMY_GROUPS.map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Decision / Action"
+                  value={newRule.engineerDecision}
+                  onChange={(e) => setNewRule({ ...newRule, engineerDecision: e.target.value })}
+                />
+              )}
+            </Grid>
+
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 multiline
                 rows={2}
-                label="System Prompt / Persona"
-                value={currentPrompt.systemPrompt}
-                onChange={(e) => handlePromptChange(currentPromptKey, 'systemPrompt', e.target.value)}
                 size="small"
-                helperText="Defines the behavior, governance boundaries, and persona of the local model"
+                label="Operational Rule Formulation (Instruction for Local LLM)"
+                value={newRule.rule}
+                onChange={(e) => setNewRule({ ...newRule, rule: e.target.value })}
+                placeholder="Write the exact rule instruction the LLM follows"
               />
             </Grid>
 
@@ -675,62 +1210,189 @@ export default function LlmConfigView({ onNotification }) {
               <TextField
                 fullWidth
                 multiline
-                rows={7}
-                label="User Prompt Template (Supports Dynamic Placeholders)"
-                value={currentPrompt.template}
-                onChange={(e) => handlePromptChange(currentPromptKey, 'template', e.target.value)}
-                sx={{
-                  fontFamily: 'Consolas, Monaco, monospace',
-                  '& textarea': { fontFamily: 'Consolas, Monaco, monospace', fontSize: '0.82rem' }
-                }}
+                rows={2}
+                size="small"
+                label="Operational Reason / Justification"
+                value={newRule.reason}
+                onChange={(e) => setNewRule({ ...newRule, reason: e.target.value })}
+                placeholder="Technical justification and audit rationale"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowCreateRuleModal(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateRule}
+            disabled={isSavingRule}
+            startIcon={isSavingRule ? <CircularProgress size={14} color="inherit" /> : <SaveOutlined />}
+            sx={{ textTransform: 'none', fontWeight: 800, bgcolor: '#7c3aed', '&:hover': { bgcolor: '#6d28d9' } }}
+          >
+            {isSavingRule ? 'Creating Rule...' : 'Create & Save to soul.txt'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DIALOG: EDIT SOUL MEMORY RULE */}
+      <Dialog open={showEditRuleModal} onClose={() => setShowEditRuleModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <EditOutlined sx={{ color: '#0284c7' }} />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Edit LLM Assignment Rule [{editingRule?.id}]
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setShowEditRuleModal(false)}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2.5 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
+            Update rule parameters in <code>soul.txt</code>. The Local LLM engine will immediately adopt these modified instructions during automated triage.
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Rule ID (Immutable Key)"
+                value={editingRule?.id || ''}
+                disabled
+                helperText="Unique identifier in soul.txt"
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Operational Stage"
+                value={editingRule?.stage || 'Triage / Assignment Routing'}
+                onChange={(e) => setEditingRule({ ...editingRule, stage: e.target.value })}
+                SelectProps={{ native: true }}
+              >
+                <option value="Triage / Assignment Routing">Stage 1: Triage / Assignment Routing</option>
+                <option value="Parameter Gate / Missing Info">Stage 2: Parameter Gate / Missing Info</option>
+                <option value="Execution / Runbook SOP">Stage 3: Runbook Automation Execution</option>
+                <option value="Post-Execution Synthesis">Stage 4: Post-Execution Synthesis & SNow Commit</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Author / Modifier"
+                value={editingRule?.author || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, author: e.target.value })}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Trigger Criteria / Condition"
+                value={editingRule?.criteria || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, criteria: e.target.value })}
+                placeholder="e.g. Service restart requested for IIS Web services"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Ticket Reference / Pattern"
+                value={editingRule?.ticketNumber || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, ticketNumber: e.target.value })}
+                placeholder="e.g. BASELINE-POLICY or RITM0010026"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Default System Recommendation"
+                value={editingRule?.defaultRecommendation || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, defaultRecommendation: e.target.value })}
+                placeholder="e.g. Server Infrastructure (OS Team)"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              {editingRule?.stage?.includes('Routing') ? (
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Assignment Group"
+                  value={editingRule?.engineerDecision || 'Application Support'}
+                  onChange={(e) => setEditingRule({ ...editingRule, engineerDecision: e.target.value })}
+                  SelectProps={{ native: true }}
+                >
+                  {TAXONOMY_GROUPS.map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Decision / Action"
+                  value={editingRule?.engineerDecision || ''}
+                  onChange={(e) => setEditingRule({ ...editingRule, engineerDecision: e.target.value })}
+                />
+              )}
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Rule Formulation (Instruction for Local LLM)"
+                value={editingRule?.rule || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, rule: e.target.value })}
+                placeholder="The exact rule instruction the LLM follows"
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
-                  AVAILABLE DYNAMIC TAGS:
-                </Typography>
-                {currentPrompt.variables.map(tag => (
-                  <Chip
-                    key={tag}
-                    label={tag}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontFamily: 'monospace', fontSize: '0.72rem', height: 22 }}
-                  />
-                ))}
-              </Box>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Reason / Justification"
+                value={editingRule?.reason || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, reason: e.target.value })}
+                placeholder="Technical reasoning and audit rationale"
+              />
             </Grid>
-
-            {/* Live Prompt Sandbox Output */}
-            {sandboxOutput && (
-              <Grid item xs={12}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: '#0f172a',
-                    color: '#38bdf8',
-                    border: '1px solid #1e293b'
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, borderBottom: '1px solid #334155', pb: 0.5 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>
-                      LOCAL MODEL GENERATION OUTPUT [{config.model}]
-                    </Typography>
-                    <Chip size="small" label="Evaluated" color="success" sx={{ height: 16, fontSize: '0.62rem', fontWeight: 700 }} />
-                  </Box>
-                  <Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.78rem', color: '#f8fafc' }}>
-                    {sandboxOutput}
-                  </Box>
-                </Paper>
-              </Grid>
-            )}
           </Grid>
-        </Box>
-      </Paper>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowEditRuleModal(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateRule}
+            disabled={isSavingRule}
+            startIcon={isSavingRule ? <CircularProgress size={14} color="inherit" /> : <SaveOutlined />}
+            sx={{ textTransform: 'none', fontWeight: 800 }}
+          >
+            {isSavingRule ? 'Updating soul.txt...' : 'Save Changes to soul.txt'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

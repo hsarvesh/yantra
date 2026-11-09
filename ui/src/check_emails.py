@@ -1,3 +1,4 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import csv
 
 with open(r'D:\dev\YASH\Yantra\ui\EMP_list.csv', encoding='utf-8') as f:

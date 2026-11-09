@@ -58,10 +58,10 @@ const STORAGE_KEY = 'yantra_snow_config_v1';
 
 export const defaultSnowConfig = {
   connection: {
-    instanceUrl: 'https://dev364281.service-now.com',
+    instanceUrl: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL) || '',
     authType: 'session_gck',
-    username: 'admin',
-    password: 'nm6uC9vSG%$X',
+    username: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_USERNAME) || 'admin',
+    password: '',
     proxyEnabled: true,
     socketTimeoutSec: 20,
     workerPoolSize: 12
@@ -143,10 +143,33 @@ export default function ServiceNowAdminView({ onNotification }) {
 
   // Load from localStorage on mount
   useEffect(() => {
+    // Sync with backend .env configuration
+    fetch('/api/snow/config')
+      .then(res => res.json())
+      .then(serverCfg => {
+        if (serverCfg.success) {
+          setConfig(prev => ({
+            ...prev,
+            connection: {
+              ...prev.connection,
+              instanceUrl: prev.connection.instanceUrl || serverCfg.instanceUrl || '',
+              username: prev.connection.username || serverCfg.username || 'admin',
+              password: '' // Keep password blank so it defaults to .env securely
+            }
+          }));
+        }
+      })
+      .catch(() => {});
+
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setConfig(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed.connection) {
+          // Never persist plain-text passwords in browser localStorage
+          parsed.connection.password = '';
+        }
+        setConfig(prev => ({ ...prev, ...parsed }));
       }
     } catch (e) {
       console.warn('Could not read config from localStorage', e);
@@ -503,6 +526,8 @@ export default function ServiceNowAdminView({ onNotification }) {
                   type={showPassword ? 'text' : 'password'}
                   label="API Password / Client Secret"
                   value={config.connection.password}
+                  placeholder="(Loaded securely from .env)"
+                  helperText={!config.connection.password ? "Using SNOW_PASSWORD from .env" : "Overriding .env password"}
                   onChange={(e) => handleConfigChange('connection', 'password', e.target.value)}
                   size="small"
                   InputProps={{
@@ -984,7 +1009,7 @@ export default function ServiceNowAdminView({ onNotification }) {
                   Interactive ServiceNow Diagnostic Test Suite
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#64748b' }}>
-                  Execute real-time live diagnostics against ServiceNow instance <code>dev364281</code> across each functional area.
+                  Execute real-time live diagnostics against ServiceNow instance <code>{config.connection.instanceUrl || 'configured instance'}</code> across each functional area.
                 </Typography>
               </Box>
 

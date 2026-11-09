@@ -1,7 +1,6 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import requests, re
 
-SNOW_URL = 'https://dev364281.service-now.com'
-AUTH_DATA = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
 
 s = requests.Session()
 s.post(f'{SNOW_URL}/login.do', data=AUTH_DATA)

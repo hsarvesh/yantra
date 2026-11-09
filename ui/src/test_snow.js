@@ -1,8 +1,22 @@
+import fs from 'fs';
+import path from 'path';
+
+// Load .env
+if (typeof process.loadEnvFile === 'function') {
+  for (const envPath of [path.join(process.cwd(), '.env'), path.join(process.cwd(), 'ui', '.env'), path.join(path.dirname(new URL(import.meta.url).pathname), '../.env')]) {
+    try { if (fs.existsSync(envPath)) { process.loadEnvFile(envPath); break; } } catch (e) {}
+  }
+}
+
+const SNOW_URL = (process.env.SNOW_INSTANCE_URL || '').replace(/\/+$/, '');
+const SNOW_USER = process.env.SNOW_USERNAME || 'admin';
+const SNOW_PASSWORD = process.env.SNOW_PASSWORD || '';
+
 async function test() {
-  const loginUrl = 'https://dev364281.service-now.com/login.do';
+  const loginUrl = `${SNOW_URL}/login.do`;
   const params = new URLSearchParams({
-    user_name: 'admin',
-    user_password: 'nm6uC9vSG%$X',
+    user_name: SNOW_USER,
+    user_password: SNOW_PASSWORD,
     sys_action: 'sysverb_login'
   });
   
@@ -18,7 +32,7 @@ async function test() {
   console.log('Login status:', res.status, 'Cookie count:', setCookies.length);
   
   // Get navpage for g_ck
-  const navRes = await fetch('https://dev364281.service-now.com/navpage.do', {
+  const navRes = await fetch(`${SNOW_URL}/navpage.do`, {
     headers: { 'Cookie': cookieStr }
   });
   const navText = await navRes.text();
@@ -31,7 +45,7 @@ async function test() {
   console.log('Got g_ck token:', token.substring(0, 10));
   
   // Query sc_req_item
-  const listRes = await fetch('https://dev364281.service-now.com/api/now/table/sc_req_item?sysparm_limit=5&sysparm_fields=number,short_description,sys_id,sys_created_on,state', {
+  const listRes = await fetch(`${SNOW_URL}/api/now/table/sc_req_item?sysparm_limit=5&sysparm_fields=number,short_description,sys_id,sys_created_on,state`, {
     headers: { 'Cookie': cookieStr, 'X-UserToken': token, 'Accept': 'application/json' }
   });
   console.log('List status:', listRes.status);

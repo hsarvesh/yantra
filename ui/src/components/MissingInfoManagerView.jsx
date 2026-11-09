@@ -165,7 +165,7 @@ export default function MissingInfoManagerView() {
               <Box sx={{ borderBottom: '1px solid #e2e8f0', pb: 1, mb: 1.5, fontSize: '0.78rem' }}>
                 <div><strong>To:</strong> Johnathan Miller (Requester)</div>
                 <div><strong>Subject:</strong> Additional Information Required for Service Request [{selectedRitm}]</div>
-                <div><strong>From:</strong> Service Request Fulfilment Team &lt;automation@dev364281.service-now.com&gt;</div>
+                <div><strong>From:</strong> Service Request Fulfilment Team &lt;automation@servicenow-fulfillment.internal&gt;</div>
               </Box>
 
               <Typography variant="body2" sx={{ lineHeight: 1.5, color: '#1e293b', fontSize: '0.82rem' }}>

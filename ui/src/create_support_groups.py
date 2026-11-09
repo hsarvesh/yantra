@@ -1,10 +1,11 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import requests
 import re
 
 s = requests.Session()
-data = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
-s.post('https://dev364281.service-now.com/login.do', data=data)
-r_nav = s.get('https://dev364281.service-now.com/navpage.do')
+data = AUTH_DATA
+s.post(f'{SNOW_URL}/login.do', data=data)
+r_nav = s.get(f'{SNOW_URL}/navpage.do')
 m_ck = re.search(r'g_ck\s*=\s*["\']([a-f0-9]+)["\']', r_nav.text, re.IGNORECASE)
 token = m_ck.group(1)
 headers = {'X-UserToken': token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
@@ -61,14 +62,14 @@ groups = [
 ]
 
 # Get itil group type sys_id
-r_types = s.get(f"https://dev364281.service-now.com/api/now/table/sys_user_group_type?sysparm_query=name=itil", headers=headers)
+r_types = s.get(f"{SNOW_URL}/api/now/table/sys_user_group_type?sysparm_query=name=itil", headers=headers)
 itil_type_id = ''
 if r_types.status_code == 200 and r_types.json().get('result'):
     itil_type_id = r_types.json()['result'][0]['sys_id']
     print("Found itil group type sys_id:", itil_type_id)
 
 # Get itil role sys_id
-r_role = s.get(f"https://dev364281.service-now.com/api/now/table/sys_user_role?sysparm_query=name=itil", headers=headers)
+r_role = s.get(f"{SNOW_URL}/api/now/table/sys_user_role?sysparm_query=name=itil", headers=headers)
 itil_role_id = ''
 if r_role.status_code == 200 and r_role.json().get('result'):
     itil_role_id = r_role.json()['result'][0]['sys_id']
@@ -78,7 +79,7 @@ print("\n--- Creating Support Groups in ServiceNow ---")
 created_groups = []
 for g in groups:
     # Check if exists
-    chk_res = s.get(f"https://dev364281.service-now.com/api/now/table/sys_user_group?sysparm_query=name={g['name']}", headers=headers)
+    chk_res = s.get(f"{SNOW_URL}/api/now/table/sys_user_group?sysparm_query=name={g['name']}", headers=headers)
     existing = chk_res.json().get('result', [])
     if existing:
         grp_id = existing[0]['sys_id']
@@ -91,7 +92,7 @@ for g in groups:
             'active': 'true',
             'type': itil_type_id
         }
-        create_res = s.post('https://dev364281.service-now.com/api/now/table/sys_user_group', headers=headers, json=payload)
+        create_res = s.post(f'{SNOW_URL}/api/now/table/sys_user_group', headers=headers, json=payload)
         if create_res.status_code in [200, 201]:
             grp_data = create_res.json()['result']
             grp_id = grp_data['sys_id']
@@ -104,7 +105,7 @@ for g in groups:
                     'group': grp_id,
                     'role': itil_role_id
                 }
-                s.post('https://dev364281.service-now.com/api/now/table/sys_group_has_role', headers=headers, json=role_payload)
+                s.post(f'{SNOW_URL}/api/now/table/sys_group_has_role', headers=headers, json=role_payload)
         else:
             print(f"Failed to create group {g['name']}: {create_res.status_code} {create_res.text[:100]}")
 

@@ -1,11 +1,10 @@
+from snow_config import SNOW_URL, AUTH_DATA
 import openpyxl
 import requests
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-SNOW_URL = 'https://dev364281.service-now.com'
-AUTH_DATA = {'user_name': 'admin', 'user_password': 'nm6uC9vSG%$X', 'sys_action': 'sysverb_login'}
 EXCEL_PATH = r'D:\dev\YASH\Yantra\ui\Enterprise_ITSM_Taxonomy.xlsx'
 
 def get_auth_session():
@@ -28,7 +27,7 @@ def main():
     total_start = time.time()
     
     session = get_auth_session()
-    print("Authenticated successfully with ServiceNow instance dev364281.")
+    print("Authenticated successfully with ServiceNow configured instance.")
 
     # 1. Load Excel Data
     wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)

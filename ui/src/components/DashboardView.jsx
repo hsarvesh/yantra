@@ -153,11 +153,12 @@ export default function DashboardView({
   };
 
   const modules = itsmData?.modules || {};
-  const incidents = modules.incidents || { totalCount: 68, records: [], listUrl: 'https://dev364281.service-now.com/incident_list.do' };
-  const requests = modules.requests || { totalCount: 24, records: [], listUrl: 'https://dev364281.service-now.com/sc_req_item_list.do' };
-  const changes = modules.changes || { totalCount: 18, records: [], listUrl: 'https://dev364281.service-now.com/change_request_list.do' };
-  const cmdb = modules.cmdb || { totalCount: 2815, records: [], listUrl: 'https://dev364281.service-now.com/cmdb_ci_list.do' };
-  const tasks = modules.tasks || { totalCount: 42, records: [], listUrl: 'https://dev364281.service-now.com/sc_task_list.do' };
+  const snowBase = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : '').replace(/\/+$/, '');
+  const incidents = modules.incidents || { totalCount: 68, records: [], listUrl: `${snowBase}/incident_list.do` };
+  const requests = modules.requests || { totalCount: 24, records: [], listUrl: `${snowBase}/sc_req_item_list.do` };
+  const changes = modules.changes || { totalCount: 18, records: [], listUrl: `${snowBase}/change_request_list.do` };
+  const cmdb = modules.cmdb || { totalCount: 2815, records: [], listUrl: `${snowBase}/cmdb_ci_list.do` };
+  const tasks = modules.tasks || { totalCount: 42, records: [], listUrl: `${snowBase}/sc_task_list.do` };
 
   const kpis = [
     {
@@ -224,7 +225,7 @@ export default function DashboardView({
             <Chip
               size="small"
               icon={<SpeedOutlined sx={{ fontSize: 14 }} />}
-              label="Connected: dev364281"
+              label={`Connected: ${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : 'ServiceNow').replace(/^https?:\/\//, '').replace(/\.service-now\.com.*$/, '')}`}
               color="success"
               sx={{ fontWeight: 700, fontSize: '0.7rem' }}
             />

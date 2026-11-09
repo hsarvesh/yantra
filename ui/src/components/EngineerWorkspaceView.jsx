@@ -45,8 +45,39 @@ import {
   LocationOnOutlined,
   CategoryOutlined,
   SearchOutlined,
-  FilterListOutlined
+  FilterListOutlined,
+  MemoryOutlined,
+  SchoolOutlined,
+  SendOutlined,
+  ChatBubbleOutline,
+  BookmarkAddedOutlined,
+  HistoryEduOutlined,
+  LightbulbOutlined,
+  TuneOutlined,
+  CloseOutlined,
+  SaveOutlined,
+  FileDownloadOutlined,
+  Check,
+  ContentCopy,
+  EditOutlined,
+  DeleteOutline,
+  AddCircleOutline
 } from '@mui/icons-material';
+
+const TAXONOMY_GROUPS = [
+  'Application Support',
+  'Server Infrastructure',
+  'Network Services',
+  'End User Computing',
+  'Access Management',
+  'Cloud Services',
+  'Security',
+  'Email & Collaboration',
+  'Facilities IT',
+  'Monitoring & Operations',
+  'Asset Management',
+  'Telephony'
+];
 
 export default function EngineerWorkspaceView({
   procedures = [],
@@ -89,6 +120,51 @@ export default function EngineerWorkspaceView({
   const [isSynthesizingAi, setIsSynthesizingAi] = useState(false);
   const [aiSynthesized, setAiSynthesized] = useState(false);
 
+  // Soul Memory (soul.txt) Persistent State
+  const [soulData, setSoulData] = useState({ rules: [], totalRules: 0, content: '' });
+  const [showSoulModal, setShowSoulModal] = useState(false);
+  const [showTeachModal, setShowTeachModal] = useState(false);
+  const [isCommittingSoul, setIsCommittingSoul] = useState(false);
+  const [teachStage, setTeachStage] = useState('Triage / Assignment Routing');
+  const [teachCriteria, setTeachCriteria] = useState('');
+  const [teachDefaultRec, setTeachDefaultRec] = useState('');
+  const [teachEngineerDecision, setTeachEngineerDecision] = useState('Application Support');
+  const [teachRule, setTeachRule] = useState('');
+  const [teachReason, setTeachReason] = useState('');
+  const [teachAuthor, setTeachAuthor] = useState('Sarvesh Huddedar (Engineer)');
+  const [soulSearchQuery, setSoulSearchQuery] = useState('');
+
+  // Soul Rule Edit & Delete State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
+  const [isSavingRule, setIsSavingRule] = useState(false);
+  const [isDeletingRule, setIsDeletingRule] = useState(false);
+
+  // Interactive Local LLM Co-Pilot Chat State
+  const [showChatPanel, setShowChatPanel] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      role: 'assistant',
+      content: 'Hello! I am your Local AI Co-Pilot powered by local llama.cpp on port 8080. I have ingested your ServiceNow CMDB and active rules from soul.txt. How can I assist you with this ticket?',
+      timestamp: new Date().toLocaleTimeString()
+    }
+  ]);
+  const [inputChatMessage, setInputChatMessage] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
+
+  // Fetch Soul Memory (soul.txt)
+  const fetchSoulMemory = async () => {
+    try {
+      const res = await fetch('/api/soul/read');
+      const data = await res.json();
+      if (data.success) {
+        setSoulData(data);
+      }
+    } catch (e) {
+      console.error('Failed to read soul.txt:', e);
+    }
+  };
+
   // Fetch live requests flowing in from ServiceNow (Incidents, Requests, RITMs)
   const fetchLiveRequests = async () => {
     setLoading(true);
@@ -112,6 +188,7 @@ export default function EngineerWorkspaceView({
 
   useEffect(() => {
     fetchLiveRequests();
+    fetchSoulMemory();
   }, []);
 
   const currentReq = liveRequests.find(r => r.sysId === selectedSysId) || liveRequests[0] || {
@@ -128,7 +205,7 @@ export default function EngineerWorkspaceView({
     assignmentGroup: 'Application Support',
     stage: 'request_approved',
     state: 'Open',
-    directUrl: 'https://dev364281.service-now.com/sc_req_item_list.do'
+    directUrl: `${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : '').replace(/\/+$/, '')}/sc_req_item_list.do`
   };
 
   // Filtered requests based on active tab and search query
@@ -225,14 +302,15 @@ export default function EngineerWorkspaceView({
           rawState: t.rawState,
           stage: t.stage,
           procedureId: t.procedureId || 'PROC-WIN-001',
-          endpointUrl: savedConfig?.endpointUrl || 'http://localhost:1234/v1',
-          model: savedConfig?.model || 'gemma'
+          endpointUrl: savedConfig?.endpointUrl || 'http://localhost:8080/v1',
+          model: savedConfig?.model || '/models/Qwen3-0.6B-Q4_K_M-Instruct.gguf'
         })
       });
 
       const data = await res.json();
       if (data.success) {
         setAiEvaluation(data);
+        fetchSoulMemory();
       }
     } catch (err) {
       console.error('Error evaluating ticket with Local AI:', err);
@@ -248,6 +326,16 @@ export default function EngineerWorkspaceView({
       return;
     }
     if (!aiEvaluation?.recommendedGroup) return;
+    return handleAssignGroupDirect(aiEvaluation.recommendedGroup, 'ITIL Taxonomy Alignment Engine');
+  };
+
+  // Direct Group Assignment in ServiceNow
+  const handleAssignGroupDirect = async (targetGroupName, ruleReason = 'Engineer Override / Soul Memory Rule') => {
+    if (isTicketClosed) {
+      alert('Action Aborted: Ticket is already Closed Complete in ServiceNow.');
+      return false;
+    }
+    if (!targetGroupName) return false;
     setIsAssigningGroup(true);
     try {
       const res = await fetch('/api/snow/auto-assign', {
@@ -257,33 +345,258 @@ export default function EngineerWorkspaceView({
           table: currentReq.table || 'sc_req_item',
           sysId: currentReq.sysId,
           ticketNumber: currentReq.ritm || currentReq.number,
-          targetGroup: aiEvaluation.recommendedGroup,
-          ruleMatched: 'ITIL Taxonomy Alignment Engine'
+          targetGroup: targetGroupName,
+          ruleMatched: ruleReason
         })
       });
 
       const data = await res.json();
       if (data.success) {
-        // Update local ticket state
         const updatedList = liveRequests.map(r =>
           r.sysId === currentReq.sysId
-            ? { ...r, assignmentGroup: aiEvaluation.recommendedGroup }
+            ? { ...r, assignmentGroup: targetGroupName }
             : r
         );
         setLiveRequests(updatedList);
-        setAiEvaluation(prev => ({
+        setAiEvaluation(prev => prev ? ({
           ...prev,
-          currentGroup: aiEvaluation.recommendedGroup,
-          isGroupMatched: true
-        }));
+          currentGroup: targetGroupName,
+          recommendedGroup: targetGroupName,
+          isGroupMatched: true,
+          reasoning: `Reassigned to '${targetGroupName}' in ServiceNow (${ruleReason}).`
+        }) : null);
+        return true;
       } else {
-        alert('Failed to update assignment group: ' + (data.error || 'Unknown error'));
+        alert('Failed to update ServiceNow: ' + (data.error || 'Unknown error'));
+        return false;
       }
     } catch (e) {
-      console.error('Error auto-assigning group in ServiceNow:', e);
+      console.error('Error assigning group in ServiceNow:', e);
       alert('Error updating ServiceNow: ' + e.message);
+      return false;
     } finally {
       setIsAssigningGroup(false);
+    }
+  };
+
+  // Open the Teach Modal prefilled for Routing override
+  const openTeachModalForRouting = (overrideGroup = 'Application Support') => {
+    setTeachStage('Triage / Assignment Routing');
+    setTeachCriteria(`Service restart requested for ${currentReq.serviceName || 'IIS Web / Application service'} (CI: ${currentReq.targetCi || 'BLR-APP-001'})`);
+    setTeachDefaultRec(aiEvaluation?.recommendedGroup || currentReq.assignmentGroup || 'Server Infrastructure (OS Team)');
+    setTeachEngineerDecision(overrideGroup);
+    setTeachRule(`When a service restart is requested for ${currentReq.serviceName || 'web/application services'}, route to ${overrideGroup} instead of Server Infrastructure.`);
+    setTeachReason(`Service restarts on ${currentReq.serviceName || 'application'} daemons directly affect application users and require ${overrideGroup} team verification.`);
+    setShowTeachModal(true);
+  };
+
+  // Commit Decision to soul.txt
+  const handleCommitSoulDecision = async () => {
+    if (!teachRule.trim()) {
+      alert('Please enter an operational rule to remember in soul.txt');
+      return;
+    }
+    setIsCommittingSoul(true);
+    try {
+      const res = await fetch('/api/soul/commit-decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage: teachStage,
+          ticketNumber: currentReq.ritm || currentReq.number || 'MANUAL-INPUT',
+          criteria: teachCriteria || `Service request for ${currentReq.targetCi || 'target CI'}`,
+          defaultRecommendation: teachDefaultRec || aiEvaluation?.recommendedGroup || 'Server Infrastructure',
+          engineerDecision: teachEngineerDecision,
+          rule: teachRule,
+          reason: teachReason || 'Engineer operational policy override',
+          author: teachAuthor || 'Sarvesh Huddedar (Engineer)'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        setShowTeachModal(false);
+
+        // Apply group reassignment directly if routing decision
+        if (teachStage.includes('Routing') && teachEngineerDecision) {
+          await handleAssignGroupDirect(teachEngineerDecision, `Soul Memory Rule [${data.ruleId}]`);
+        }
+
+        // Re-evaluate with updated soul memory
+        evaluateTicketWithLlm(currentReq);
+
+        alert(`Decision successfully recorded into soul.txt as ${data.ruleId}!\n\nThe Local AI Engine will now remember this rule for all future tickets.`);
+      } else {
+        alert('Failed to record decision: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error('Error committing to soul.txt:', e);
+      alert('Error writing to soul.txt: ' + e.message);
+    } finally {
+      setIsCommittingSoul(false);
+    }
+  };
+
+  // Open Edit Modal for an existing rule
+  const handleOpenEditRule = (rule) => {
+    setEditingRule({
+      id: rule.id || '',
+      stage: rule.stage || 'Triage / Assignment Routing',
+      ticketNumber: rule.ticketNumber || rule.ticket || 'MANUAL-INPUT',
+      criteria: rule.criteria || '',
+      defaultRecommendation: rule.defaultRecommendation || '',
+      engineerDecision: rule.engineerDecision || 'Application Support',
+      rule: rule.rule || '',
+      reason: rule.reason || '',
+      author: rule.author || 'Sarvesh Huddedar (Engineer)',
+      timestamp: rule.timestamp || ''
+    });
+    setShowEditModal(true);
+  };
+
+  // Save edited rule to soul.txt
+  const handleSaveEditedRule = async () => {
+    if (!editingRule?.rule?.trim()) {
+      alert('Operational rule formulation is required.');
+      return;
+    }
+    setIsSavingRule(true);
+    try {
+      const res = await fetch('/api/soul/update-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingRule)
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        setShowEditModal(false);
+        evaluateTicketWithLlm(currentReq);
+        alert(`Rule [${editingRule.id}] updated successfully in soul.txt!`);
+      } else {
+        alert('Failed to update rule: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error('Error updating rule in soul.txt:', e);
+      alert('Error updating rule: ' + e.message);
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  // Delete rule from soul.txt
+  const handleDeleteRule = async (ruleId) => {
+    if (!ruleId) return;
+    if (!window.confirm(`Are you sure you want to permanently delete rule [${ruleId}] from soul.txt?\n\nThe Local LLM will no longer use this rule for future evaluations.`)) {
+      return;
+    }
+    setIsDeletingRule(true);
+    try {
+      const res = await fetch('/api/soul/delete-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ruleId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSoulMemory();
+        evaluateTicketWithLlm(currentReq);
+        alert(`Rule [${ruleId}] deleted successfully from soul.txt!`);
+      } else {
+        alert('Failed to delete rule: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error('Error deleting rule from soul.txt:', e);
+      alert('Error deleting rule: ' + e.message);
+    } finally {
+      setIsDeletingRule(false);
+    }
+  };
+
+  // Open Create Rule Modal
+  const handleOpenCreateRule = () => {
+    setTeachStage('Triage / Assignment Routing');
+    setTeachCriteria(`Service restart requested for ${currentReq?.serviceName || 'IIS Web / Application service'} (CI: ${currentReq?.targetCi || 'BLR-APP-001'})`);
+    setTeachDefaultRec(aiEvaluation?.recommendedGroup || currentReq?.assignmentGroup || 'Server Infrastructure (OS Team)');
+    setTeachEngineerDecision('Application Support');
+    setTeachRule('');
+    setTeachReason('');
+    setTeachAuthor('Sarvesh Huddedar (Engineer)');
+    setShowTeachModal(true);
+  };
+
+  // Send interactive message to Local LLM Co-Pilot
+  const handleSendInteractiveChat = async (presetText) => {
+    const textToSend = presetText || inputChatMessage;
+    if (!textToSend.trim()) return;
+
+    const userMessage = {
+      role: 'user',
+      content: textToSend,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setChatMessages(prev => [...prev, userMessage]);
+    setInputChatMessage('');
+    setIsSendingChat(true);
+
+    try {
+      let savedConfig = null;
+      try {
+        const stored = localStorage.getItem('yantra_llm_config_v1');
+        if (stored) savedConfig = JSON.parse(stored);
+      } catch (e) {}
+
+      const res = await fetch('/api/llm/interactive-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticketContext: {
+            ritm: currentReq.ritm || currentReq.number,
+            table: currentReq.table,
+            shortDescription: currentReq.shortDescription,
+            description: currentReq.description || currentReq.shortDescription,
+            targetCi: currentReq.targetCi,
+            ciLocation: currentReq.ciLocation,
+            ciIp: currentReq.ciIp,
+            serviceName: currentReq.serviceName || selectedService,
+            assignmentGroup: currentReq.assignmentGroup,
+            state: currentReq.state,
+            stage: currentReq.stage
+          },
+          messages: chatMessages,
+          userMessage: textToSend,
+          endpointUrl: savedConfig?.endpointUrl || 'http://localhost:8080/v1',
+          model: savedConfig?.model || '/models/Qwen3-0.6B-Q4_K_M-Instruct.gguf'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: data.reply,
+            timestamp: new Date().toLocaleTimeString(),
+            tokensPerSec: data.tokensPerSec,
+            latencyMs: data.latencyMs,
+            model: data.model
+          }
+        ]);
+      }
+    } catch (e) {
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Local LLM communication error: ${e.message}`,
+          timestamp: new Date().toLocaleTimeString(),
+          isError: true
+        }
+      ]);
+    } finally {
+      setIsSendingChat(false);
     }
   };
 
@@ -577,7 +890,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   ITSM Work Items Queue
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Live records synced from dev364281
+                  Live records synced from {(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : 'ServiceNow').replace(/^https?:\/\//, '').replace(/\.service-now\.com.*$/, '')}
                 </Typography>
               </Box>
               <Chip
@@ -843,7 +1156,141 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
               </Button>
             </Box>
 
-            <Divider sx={{ mb: 2.5 }} />
+            <Divider sx={{ mb: 2 }} />
+
+            {/* INTERACTIVE LOCAL LLM & SOUL MEMORY COMMAND BAR */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 2.5,
+                borderRadius: 2,
+                bgcolor: '#f8fafc',
+                border: '1.5px solid #cbd5e1',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MemoryOutlined sx={{ color: '#7c3aed', fontSize: 24 }} />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b', fontSize: '0.85rem' }}>
+                      LOCAL LLM & SOUL MEMORY CO-PILOT
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                      Engine: <strong>llama.cpp (port 8080)</strong> • Persistent Memory: <strong>{soulData.totalRules || soulData.rules?.length || 4} rules in soul.txt</strong>
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Tooltip title="Inspect the persistent soul.txt memory file and all learned operational rules">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<HistoryEduOutlined sx={{ fontSize: 15 }} />}
+                      onClick={() => setShowSoulModal(true)}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        borderRadius: 1.5,
+                        borderColor: '#c084fc',
+                        color: '#7e22ce',
+                        bgcolor: '#faf5ff',
+                        '&:hover': { bgcolor: '#f3e8ff', borderColor: '#a855f7' }
+                      }}
+                    >
+                      🧠 soul.txt ({soulData.totalRules || soulData.rules?.length || 4} Rules)
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip title="Teach a new operational rule to soul.txt to evolve LLM decision making">
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<SchoolOutlined sx={{ fontSize: 15 }} />}
+                      onClick={() => openTeachModalForRouting('Application Support')}
+                      disabled={isTicketClosed}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        borderRadius: 1.5,
+                        bgcolor: '#7c3aed',
+                        '&:hover': { bgcolor: '#6d28d9' }
+                      }}
+                    >
+                      ⚡ Teach Operational Rule
+                    </Button>
+                  </Tooltip>
+                </Box>
+              </Box>
+
+              <Divider sx={{ borderColor: '#e2e8f0' }} />
+
+              {/* Interactive Options for Selected Ticket */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem' }}>
+                    Interactive Actions:
+                  </Typography>
+
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    startIcon={isEvaluatingAi ? <CircularProgress size={12} color="inherit" /> : <AutoAwesomeOutlined sx={{ fontSize: 14 }} />}
+                    disabled={isEvaluatingAi}
+                    onClick={() => evaluateTicketWithLlm(currentReq)}
+                    sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, py: 0.3 }}
+                  >
+                    {isEvaluatingAi ? 'Consulting Local LLM & soul.txt...' : '🤖 Consult Local LLM & Soul'}
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant={showChatPanel ? 'contained' : 'outlined'}
+                    color="info"
+                    startIcon={<ChatBubbleOutline sx={{ fontSize: 14 }} />}
+                    onClick={() => setShowChatPanel(!showChatPanel)}
+                    sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, py: 0.3 }}
+                  >
+                    {showChatPanel ? 'Hide Co-Pilot Console' : '💬 Interactive LLM Console'}
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<TuneOutlined sx={{ fontSize: 14 }} />}
+                    onClick={() => openTeachModalForRouting(currentReq.assignmentGroup === 'Application Support' ? 'Server Infrastructure' : 'Application Support')}
+                    disabled={isTicketClosed}
+                    sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, py: 0.3 }}
+                  >
+                    Override & Teach soul.txt
+                  </Button>
+                </Box>
+
+                {aiEvaluation?.appliedSoulRules?.length > 0 && (
+                  <Chip
+                    size="small"
+                    icon={<BookmarkAddedOutlined sx={{ fontSize: 13, color: '#15803d !important' }} />}
+                    label={`Soul Memory Active: ${aiEvaluation.appliedSoulRules[0]}`}
+                    sx={{
+                      height: 22,
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      bgcolor: '#dcfce7',
+                      color: '#15803d',
+                      border: '1px solid #86efac'
+                    }}
+                  />
+                )}
+              </Box>
+            </Paper>
 
             {/* IMMEDIATE ABORT ALERT BANNER FOR CLOSED COMPLETE TICKETS */}
             {isTicketClosed && (
@@ -881,14 +1328,171 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
               </Alert>
             )}
 
-            {/* STAGE 1: AI ASSIGNMENT GROUP DECISION (TAXONOMY DRIVEN) */}
+            {/* INTERACTIVE LOCAL LLM CO-PILOT CHAT PANEL (COLLAPSIBLE) */}
+            {showChatPanel && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  mb: 2.5,
+                  border: '1.5px solid #38bdf8',
+                  bgcolor: '#f0f9ff'
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PsychologyOutlined sx={{ color: '#0284c7', fontSize: 20 }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0c4a6e', fontSize: '0.85rem' }}>
+                      Interactive Local LLM Co-Pilot (llama.cpp :8080)
+                    </Typography>
+                    <Chip size="small" label="Live Local Inference" color="success" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 700 }} />
+                    <Chip size="small" label="soul.txt Ingested" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 700, bgcolor: '#e0e7ff', color: '#3730a3' }} />
+                  </Box>
+                  <IconButton size="small" onClick={() => setShowChatPanel(false)}>
+                    <CloseOutlined sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Box>
+
+                {/* Quick Inquiry Prompt Chips */}
+                <Box sx={{ display: 'flex', gap: 0.8, mb: 1.5, flexWrap: 'wrap' }}>
+                  <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 700, alignSelf: 'center', mr: 0.5 }}>
+                    Quick Ask:
+                  </Typography>
+                  {[
+                    'Why route service restart to Application Support?',
+                    'Does this CI have dependent services before restart?',
+                    'Draft a PowerShell verification script for W3SVC',
+                    'Explain how soul.txt rules apply to this ticket'
+                  ].map((promptText, i) => (
+                    <Chip
+                      key={i}
+                      label={promptText}
+                      clickable
+                      size="small"
+                      onClick={() => handleSendInteractiveChat(promptText)}
+                      sx={{
+                        fontSize: '0.68rem',
+                        bgcolor: '#ffffff',
+                        border: '1px solid #bae6fd',
+                        color: '#0369a1',
+                        '&:hover': { bgcolor: '#e0f2fe' }
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                {/* Chat Message Scroll Window */}
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    bgcolor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    minHeight: 160,
+                    maxHeight: 260,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.2,
+                    mb: 1.5
+                  }}
+                >
+                  {chatMessages.map((msg, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          maxWidth: '88%',
+                          p: 1.2,
+                          borderRadius: 2,
+                          bgcolor: msg.role === 'user' ? '#0284c7' : (msg.isError ? '#fef2f2' : '#f8fafc'),
+                          color: msg.role === 'user' ? '#ffffff' : '#0f172a',
+                          border: msg.role === 'user' ? 'none' : '1px solid #e2e8f0',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.3, gap: 1 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.68rem', color: msg.role === 'user' ? '#bae6fd' : '#64748b' }}>
+                            {msg.role === 'user' ? 'You (Engineer)' : 'Local LLM Engine'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: '0.62rem', color: msg.role === 'user' ? '#e0f2fe' : '#94a3b8' }}>
+                            {msg.timestamp}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ fontSize: '0.78rem', whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+                          {msg.content}
+                        </Typography>
+                        {msg.tokensPerSec && (
+                          <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
+                            <Chip
+                              size="small"
+                              label={`${msg.tokensPerSec} tokens/s • ${msg.latencyMs}ms`}
+                              sx={{ height: 16, fontSize: '0.58rem', fontWeight: 700, bgcolor: '#e2e8f0', color: '#475569' }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                  {isSendingChat && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
+                      <CircularProgress size={14} />
+                      <Typography variant="caption" sx={{ color: '#64748b' }}>
+                        Local LLM reasoning with soul.txt...
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Input Box */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Ask Local LLM or provide operational guidance (e.g. 'Route IIS tickets to App Support')..."
+                    value={inputChatMessage}
+                    onChange={(e) => setInputChatMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendInteractiveChat();
+                      }
+                    }}
+                    disabled={isSendingChat}
+                    sx={{
+                      bgcolor: '#ffffff',
+                      '& .MuiInputBase-input': { fontSize: '0.8rem' }
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleSendInteractiveChat()}
+                    disabled={isSendingChat || !inputChatMessage.trim()}
+                    endIcon={isSendingChat ? <CircularProgress size={14} color="inherit" /> : <SendOutlined sx={{ fontSize: 15 }} />}
+                    sx={{ textTransform: 'none', fontWeight: 700, px: 2, whiteSpace: 'nowrap' }}
+                  >
+                    Send
+                  </Button>
+                </Box>
+              </Paper>
+            )}
+
+            {/* STAGE 1: AI ASSIGNMENT GROUP DECISION (TAXONOMY & SOUL MEMORY DRIVEN) */}
             <Card variant="outlined" sx={{ borderRadius: 2, mb: 2.5, borderColor: isTicketClosed ? '#cbd5e1' : (aiEvaluation?.isGroupMatched ? '#86efac' : '#fed7aa'), bgcolor: isTicketClosed ? '#f8fafc' : (aiEvaluation?.isGroupMatched ? '#f0fdf4' : '#fffbeb'), opacity: isTicketClosed ? 0.6 : 1 }}>
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {isTicketClosed ? <LockOutlined sx={{ fontSize: 20, color: '#64748b' }} /> : <AssignmentIndOutlined sx={{ fontSize: 20, color: aiEvaluation?.isGroupMatched ? '#16a34a' : '#d97706' }} />}
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                      STAGE 1: ITIL TAXONOMY ASSIGNMENT ROUTER
+                      STAGE 1: ITIL TAXONOMY ASSIGNMENT ROUTER (SOUL-AWARE)
                     </Typography>
                   </Box>
                   {isTicketClosed ? (
@@ -902,17 +1506,70 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   ) : isEvaluatingAi ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <CircularProgress size={12} />
-                      <Typography variant="caption" sx={{ color: '#64748b' }}>Analyzing with Local AI...</Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b' }}>Analyzing with Local AI & soul.txt...</Typography>
                     </Box>
                   ) : (
-                    <Chip
-                      size="small"
-                      icon={<PsychologyOutlined sx={{ fontSize: 12 }} />}
-                      label={`Model: ${aiEvaluation?.modelUsed || 'Local LLM'}`}
-                      sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#f1f5f9' }}
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                      {aiEvaluation?.appliedSoulRules?.length > 0 && (
+                        <Chip
+                          size="small"
+                          icon={<BookmarkAddedOutlined sx={{ fontSize: 12, color: '#7e22ce !important' }} />}
+                          label={`Soul Rule: ${aiEvaluation.appliedSoulRules[0]}`}
+                          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800, bgcolor: '#f3e8ff', color: '#7e22ce', border: '1px solid #d8b4fe' }}
+                        />
+                      )}
+                      <Chip
+                        size="small"
+                        icon={<PsychologyOutlined sx={{ fontSize: 12 }} />}
+                        label={`Model: ${aiEvaluation?.modelUsed || 'Local LLM'}`}
+                        sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#f1f5f9' }}
+                      />
+                    </Box>
                   )}
                 </Box>
+
+                {/* Soul Memory Learned Policy Alert */}
+                {aiEvaluation?.appliedSoulRules?.length > 0 && (
+                  <Alert
+                    severity="info"
+                    icon={<MemoryOutlined sx={{ fontSize: 18, color: '#7c3aed' }} />}
+                    action={
+                      <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
+                        <Button
+                          size="small"
+                          color="inherit"
+                          startIcon={<EditOutlined sx={{ fontSize: 13 }} />}
+                          onClick={() => {
+                            const matching = soulData.rules.find(r => r.id === aiEvaluation.appliedSoulRules[0]);
+                            if (matching) handleOpenEditRule(matching);
+                          }}
+                          sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #d8b4fe', bgcolor: '#ffffff' }}
+                        >
+                          Edit Rule
+                        </Button>
+                        <Button
+                          size="small"
+                          color="error"
+                          startIcon={<DeleteOutline sx={{ fontSize: 13 }} />}
+                          onClick={() => handleDeleteRule(aiEvaluation.appliedSoulRules[0])}
+                          sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #fecaca', bgcolor: '#ffffff' }}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    }
+                    sx={{
+                      mb: 1.5,
+                      py: 0.5,
+                      borderRadius: 1.5,
+                      bgcolor: '#faf5ff',
+                      border: '1px solid #e9d5ff',
+                      '& .MuiAlert-message': { fontSize: '0.76rem', color: '#581c87' }
+                    }}
+                  >
+                    <strong>Persistent Soul Memory Override Active:</strong> Matching rule <code>{aiEvaluation.appliedSoulRules[0]}</code> in <code>soul.txt</code> dictates that service restart requests for IIS / Web applications route to <strong>Application Support</strong> instead of OS Team.
+                  </Alert>
+                )}
 
                 <Grid container spacing={1.5} alignItems="center">
                   <Grid item xs={12} sm={6}>
@@ -923,7 +1580,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>AI Recommended Group (from Taxonomy):</Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>AI & Soul Recommended Group:</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 800, color: isTicketClosed ? '#475569' : '#0284c7' }}>
                         {aiEvaluation?.recommendedGroup || currentReq.assignmentGroup || 'Application Support'}
@@ -932,7 +1589,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                         <Chip
                           size="small"
                           label={`${aiEvaluation?.confidence || 96}% confidence`}
-                          color="primary"
+                          color={aiEvaluation?.appliedSoulRules?.length > 0 ? "secondary" : "primary"}
                           variant="outlined"
                           sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }}
                         />
@@ -942,26 +1599,79 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
 
                   <Grid item xs={12}>
                     <Typography variant="caption" sx={{ color: '#475569', display: 'block', bgcolor: 'rgba(255,255,255,0.7)', p: 1, borderRadius: 1.5, border: '1px solid rgba(0,0,0,0.05)' }}>
-                      <strong>AI Triage Rationale:</strong> {isTicketClosed ? 'Ticket is already Closed Complete in ServiceNow. All routing and reassignments are locked to maintain audit integrity.' : (aiEvaluation?.reasoning || 'Analyzing ticket text against Enterprise ITSM Taxonomy criteria...')}
+                      <strong>AI & Soul Triage Rationale:</strong> {isTicketClosed ? 'Ticket is already Closed Complete in ServiceNow. All routing and reassignments are locked to maintain audit integrity.' : (aiEvaluation?.reasoning || 'Analyzing ticket text against Enterprise ITSM Taxonomy & soul.txt memory rules...')}
                     </Typography>
                   </Grid>
 
-                  {!isTicketClosed && !aiEvaluation?.isGroupMatched && (
-                    <Grid item xs={12} sx={{ mt: 0.5 }}>
+                  {/* Engineer Decision & Interaction Controls */}
+                  {!isTicketClosed && (
+                    <Grid item xs={12} sx={{ mt: 1, pt: 1, borderTop: '1px dashed #cbd5e1' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-                        <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 600 }}>
-                          ⚠️ Assignment group mismatch detected! Ticket is currently assigned to '{currentReq.assignmentGroup}'.
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
+                            Engineer Decision:
+                          </Typography>
+
+                          {/* Accept & Reassign button */}
+                          {!aiEvaluation?.isGroupMatched && (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="warning"
+                              startIcon={isAssigningGroup ? <CircularProgress size={12} color="inherit" /> : <AssignmentTurnedInOutlined sx={{ fontSize: 14 }} />}
+                              disabled={isAssigningGroup}
+                              onClick={handleAssignIdentifiedGroup}
+                              sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.74rem', borderRadius: 1.5 }}
+                            >
+                              {isAssigningGroup ? 'Assigning in SNow...' : `Reassign to Identified: ${aiEvaluation?.recommendedGroup}`}
+                            </Button>
+                          )}
+
+                          {/* Override & Teach to soul.txt */}
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<SchoolOutlined sx={{ fontSize: 14 }} />}
+                            onClick={() => openTeachModalForRouting(currentReq.assignmentGroup === 'Application Support' ? 'Server Infrastructure' : 'Application Support')}
+                            sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.74rem', borderRadius: 1.5 }}
+                          >
+                            Override & Teach soul.txt
+                          </Button>
+
+                          {/* Quick direct switch to OS Team or Application Team */}
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={isAssigningGroup || currentReq.assignmentGroup === 'Application Support'}
+                            onClick={() => handleAssignGroupDirect('Application Support', 'Engineer chosen routing to Application Support')}
+                            sx={{ textTransform: 'none', fontSize: '0.7rem', borderRadius: 1.5, borderColor: '#cbd5e1', color: '#334155' }}
+                          >
+                            Set App Support
+                          </Button>
+
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={isAssigningGroup || currentReq.assignmentGroup === 'Server Infrastructure'}
+                            onClick={() => handleAssignGroupDirect('Server Infrastructure', 'Engineer chosen routing to Server Infrastructure (OS Team)')}
+                            sx={{ textTransform: 'none', fontSize: '0.7rem', borderRadius: 1.5, borderColor: '#cbd5e1', color: '#334155' }}
+                          >
+                            Set OS Team
+                          </Button>
+                        </Box>
+
                         <Button
                           size="small"
-                          variant="contained"
-                          color="warning"
-                          startIcon={isAssigningGroup ? <CircularProgress size={12} color="inherit" /> : <AssignmentTurnedInOutlined sx={{ fontSize: 14 }} />}
-                          disabled={isAssigningGroup}
-                          onClick={handleAssignIdentifiedGroup}
-                          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.75rem', borderRadius: 1.5 }}
+                          variant="text"
+                          startIcon={<ChatBubbleOutline sx={{ fontSize: 13 }} />}
+                          onClick={() => {
+                            setShowChatPanel(true);
+                            handleSendInteractiveChat(`Why did you recommend ${aiEvaluation?.recommendedGroup || 'Application Support'} for ticket ${currentReq.ritm || currentReq.number}? Does soul.txt have rules for this?`);
+                          }}
+                          sx={{ textTransform: 'none', fontSize: '0.7rem', fontWeight: 600, color: '#0284c7' }}
                         >
-                          {isAssigningGroup ? 'Assigning in ServiceNow...' : `Assign to Identified Group: ${aiEvaluation?.recommendedGroup}`}
+                          Ask LLM Co-Pilot Why →
                         </Button>
                       </Box>
                     </Grid>
@@ -1481,6 +2191,515 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
             sx={{ textTransform: 'none', fontWeight: 700 }}
           >
             Submit Details & Re-evaluate with Local AI
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DIALOG: TEACH SOUL MEMORY (PERSISTENT OPERATIONAL RULE) */}
+      <Dialog open={showTeachModal} onClose={() => setShowTeachModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SchoolOutlined sx={{ color: '#7c3aed' }} />
+            Create / Teach Operational Rule (soul.txt)
+          </Box>
+          <IconButton size="small" onClick={() => setShowTeachModal(false)}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
+            When you record a decision here, it is permanently written to <code>soul.txt</code> on disk. The Local LLM engine dynamically injects these rules into its context on every evaluation, allowing the system to evolve its decision-making over time without retraining weights.
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Operational Stage"
+                value={teachStage}
+                onChange={(e) => setTeachStage(e.target.value)}
+                SelectProps={{ native: true }}
+                helperText="Select which stage of the lifecycle this decision governs"
+              >
+                <option value="Triage / Assignment Routing">Stage 1: Triage / Assignment Routing</option>
+                <option value="Parameter Gate / Missing Info">Stage 2: Parameter Gate / Missing Info</option>
+                <option value="Execution / Runbook SOP">Stage 3: Runbook Automation Execution</option>
+                <option value="Post-Execution Synthesis">Stage 4: Post-Execution Synthesis & SNow Commit</option>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Author / Engineer Name"
+                value={teachAuthor}
+                onChange={(e) => setTeachAuthor(e.target.value)}
+                helperText="Logged in soul.txt for ITIL change audit compliance"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Trigger Criteria / Condition"
+                value={teachCriteria}
+                onChange={(e) => setTeachCriteria(e.target.value)}
+                placeholder="e.g. Service restart requested for IIS Web services (W3SVC)"
+                helperText="The pattern or ticket attributes that trigger this operational decision"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Default System / Taxonomy Recommendation"
+                value={teachDefaultRec}
+                onChange={(e) => setTeachDefaultRec(e.target.value)}
+                placeholder="e.g. Server Infrastructure (OS Team)"
+                helperText="What the system would normally recommend by default"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              {teachStage.includes('Routing') ? (
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Assignment Group"
+                  value={teachEngineerDecision}
+                  onChange={(e) => setTeachEngineerDecision(e.target.value)}
+                  SelectProps={{ native: true }}
+                  helperText="The routing override that will be saved in soul.txt and applied in ServiceNow"
+                >
+                  {TAXONOMY_GROUPS.map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Engineer Decision / Action"
+                  value={teachEngineerDecision}
+                  onChange={(e) => setTeachEngineerDecision(e.target.value)}
+                  placeholder="e.g. Route to Application Support"
+                  helperText="The operational action or decision executed by engineer"
+                />
+              )}
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Rule Formulation (Prescriptive rule for Local LLM)"
+                value={teachRule}
+                onChange={(e) => setTeachRule(e.target.value)}
+                placeholder="e.g. When a service restart is requested on IIS web servers, route to Application Support instead of Server Infrastructure."
+                helperText="Write the exact instruction the Local LLM must follow when evaluating future tickets"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Reason / Justification"
+                value={teachReason}
+                onChange={(e) => setTeachReason(e.target.value)}
+                placeholder="e.g. Service restarts on IIS web servers affect web customer traffic directly; Application Support must verify IIS app pools."
+                helperText="Reasoning captured for governance audit and LLM chain-of-thought explanation"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowTeachModal(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleCommitSoulDecision}
+            disabled={isCommittingSoul}
+            startIcon={isCommittingSoul ? <CircularProgress size={14} color="inherit" /> : <SaveOutlined />}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 800,
+              bgcolor: '#7c3aed',
+              '&:hover': { bgcolor: '#6d28d9' }
+            }}
+          >
+            {isCommittingSoul ? 'Committing to soul.txt...' : 'Commit to soul.txt & Apply to ServiceNow'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DIALOG: SOUL MEMORY INSPECTOR (soul.txt) */}
+      <Dialog open={showSoulModal} onClose={() => setShowSoulModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MemoryOutlined sx={{ color: '#7c3aed', fontSize: 24 }} />
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                soul.txt — Persistent Operational Memory
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                File: <code>/home/sar/dev/yantra/Yantra/soul.txt</code> ({soulData.totalRules || soulData.rules?.length || 4} Rules Active)
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<AddCircleOutline sx={{ fontSize: 14 }} />}
+              onClick={() => {
+                setShowSoulModal(false);
+                handleOpenCreateRule();
+              }}
+              sx={{ textTransform: 'none', fontSize: '0.75rem', fontWeight: 700, bgcolor: '#7c3aed', '&:hover': { bgcolor: '#6d28d9' } }}
+            >
+              + Create New Rule
+            </Button>
+            <IconButton size="small" onClick={() => setShowSoulModal(false)}>
+              <CloseOutlined sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2 }}>
+          {/* Search & Stats Bar */}
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search rules by ID, stage, keyword (e.g. 'restart', 'IIS', 'Application Support')..."
+              value={soulSearchQuery}
+              onChange={(e) => setSoulSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchOutlined sx={{ fontSize: 18, color: '#64748b', mr: 1 }} />
+              }}
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<Refresh sx={{ fontSize: 14 }} />}
+              onClick={fetchSoulMemory}
+              sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+            >
+              Refresh
+            </Button>
+          </Box>
+
+          {/* Rule List */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {(soulData.rules || [])
+              .filter(r => {
+                if (!soulSearchQuery.trim()) return true;
+                const q = soulSearchQuery.toLowerCase();
+                return (
+                  (r.id || '').toLowerCase().includes(q) ||
+                  (r.stage || '').toLowerCase().includes(q) ||
+                  (r.rule || '').toLowerCase().includes(q) ||
+                  (r.criteria || '').toLowerCase().includes(q) ||
+                  (r.engineerDecision || '').toLowerCase().includes(q) ||
+                  (r.reason || '').toLowerCase().includes(q)
+                );
+              })
+              .map((r, i) => (
+                <Paper
+                  key={i}
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    borderColor: '#e2e8f0',
+                    bgcolor: '#ffffff',
+                    transition: 'all 0.15s ease',
+                    '&:hover': { borderColor: '#c084fc', boxShadow: '0 2px 8px rgba(124, 58, 237, 0.08)' }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip
+                        size="small"
+                        label={r.id || `RULE-00${i + 1}`}
+                        sx={{ fontWeight: 800, fontSize: '0.72rem', bgcolor: '#f3e8ff', color: '#7c3aed', border: '1px solid #d8b4fe' }}
+                      />
+                      <Chip
+                        size="small"
+                        label={r.stage || 'General'}
+                        variant="outlined"
+                        sx={{ fontSize: '0.68rem', fontWeight: 600, color: '#475569' }}
+                      />
+                      {r.ticketNumber && (
+                        <Chip
+                          size="small"
+                          label={r.ticketNumber}
+                          sx={{ fontSize: '0.65rem', bgcolor: '#f1f5f9', color: '#334155' }}
+                        />
+                      )}
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.68rem', mr: 0.5 }}>
+                        {r.timestamp ? r.timestamp.substring(0, 10) : 'Active'} • {r.author || 'Engineer'}
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<EditOutlined sx={{ fontSize: 13 }} />}
+                        onClick={() => handleOpenEditRule(r)}
+                        sx={{ textTransform: 'none', fontSize: '0.68rem', fontWeight: 700, py: 0.2, px: 1, borderRadius: 1.2, minWidth: 'auto' }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteOutline sx={{ fontSize: 13 }} />}
+                        onClick={() => handleDeleteRule(r.id)}
+                        sx={{ textTransform: 'none', fontSize: '0.68rem', fontWeight: 700, py: 0.2, px: 1, borderRadius: 1.2, minWidth: 'auto' }}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>
+                    📜 {r.rule}
+                  </Typography>
+
+                  <Grid container spacing={1} sx={{ mt: 0.5 }}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Trigger Criteria:</Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.78rem', color: '#334155', fontWeight: 600 }}>
+                        {r.criteria || 'N/A'}
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Routing Transition:</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontSize: '0.76rem', color: '#dc2626', textDecoration: 'line-through' }}>
+                          {r.defaultRecommendation || 'Default'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>➔</Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 800 }}>
+                          {r.engineerDecision || 'Override'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    {r.reason && (
+                      <Grid item xs={12}>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Operational Reason:</Typography>
+                        <Typography variant="caption" sx={{ color: '#475569', fontStyle: 'italic', display: 'block' }}>
+                          "{r.reason}"
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Paper>
+              ))}
+          </Box>
+
+          {/* Raw soul.txt Preview */}
+          <Box sx={{ mt: 2.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
+              RAW DISK FILE PREVIEW (/home/sar/dev/yantra/Yantra/soul.txt):
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 1.5,
+                bgcolor: '#0f172a',
+                color: '#38bdf8',
+                fontFamily: 'Consolas, Monaco, monospace',
+                fontSize: '0.72rem',
+                maxHeight: 180,
+                overflowY: 'auto',
+                borderRadius: 1.5,
+                border: '1px solid #1e293b'
+              }}
+            >
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {soulData.content || '# soul.txt active memory file'}
+              </pre>
+            </Paper>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowSoulModal(false)} sx={{ textTransform: 'none' }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DIALOG: EDIT SOUL MEMORY RULE */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <EditOutlined sx={{ color: '#0284c7' }} />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Edit LLM Assignment Rule [{editingRule?.id}]
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setShowEditModal(false)}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2.5 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
+            Update rule parameters in <code>soul.txt</code>. The Local LLM engine will immediately adopt these modified instructions during automated triage.
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Rule ID (Immutable Key)"
+                value={editingRule?.id || ''}
+                disabled
+                helperText="Unique identifier in soul.txt"
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Operational Stage"
+                value={editingRule?.stage || 'Triage / Assignment Routing'}
+                onChange={(e) => setEditingRule({ ...editingRule, stage: e.target.value })}
+                SelectProps={{ native: true }}
+              >
+                <option value="Triage / Assignment Routing">Stage 1: Triage / Assignment Routing</option>
+                <option value="Parameter Gate / Missing Info">Stage 2: Parameter Gate / Missing Info</option>
+                <option value="Execution / Runbook SOP">Stage 3: Runbook Automation Execution</option>
+                <option value="Post-Execution Synthesis">Stage 4: Post-Execution Synthesis & SNow Commit</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Author / Modifier"
+                value={editingRule?.author || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, author: e.target.value })}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Trigger Criteria / Condition"
+                value={editingRule?.criteria || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, criteria: e.target.value })}
+                placeholder="e.g. Service restart requested for IIS Web services"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Ticket Reference / Pattern"
+                value={editingRule?.ticketNumber || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, ticketNumber: e.target.value })}
+                placeholder="e.g. BASELINE-POLICY or RITM0010026"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Default System Recommendation"
+                value={editingRule?.defaultRecommendation || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, defaultRecommendation: e.target.value })}
+                placeholder="e.g. Server Infrastructure (OS Team)"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              {editingRule?.stage?.includes('Routing') ? (
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Assignment Group"
+                  value={editingRule?.engineerDecision || 'Application Support'}
+                  onChange={(e) => setEditingRule({ ...editingRule, engineerDecision: e.target.value })}
+                  SelectProps={{ native: true }}
+                >
+                  {TAXONOMY_GROUPS.map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Engineer Chosen Decision / Action"
+                  value={editingRule?.engineerDecision || ''}
+                  onChange={(e) => setEditingRule({ ...editingRule, engineerDecision: e.target.value })}
+                />
+              )}
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Rule Formulation (Instruction for Local LLM)"
+                value={editingRule?.rule || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, rule: e.target.value })}
+                placeholder="The exact rule instruction the LLM follows"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Operational Reason / Justification"
+                value={editingRule?.reason || ''}
+                onChange={(e) => setEditingRule({ ...editingRule, reason: e.target.value })}
+                placeholder="Technical reasoning and audit rationale"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowEditModal(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveEditedRule}
+            disabled={isSavingRule}
+            startIcon={isSavingRule ? <CircularProgress size={14} color="inherit" /> : <SaveOutlined />}
+            sx={{ textTransform: 'none', fontWeight: 800 }}
+          >
+            {isSavingRule ? 'Updating soul.txt...' : 'Save Changes to soul.txt'}
           </Button>
         </DialogActions>
       </Dialog>
