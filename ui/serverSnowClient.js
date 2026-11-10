@@ -569,80 +569,122 @@ export async function getItsmDashboardOverview(customConfig = {}) {
   };
 }
 
+// Helper: Extract real metadata from ServiceNow tickets without injecting fake defaults
+function extractTicketMetadata(item) {
+  const shortDesc = item.short_description || '';
+  const desc = item.description || '';
+  const fullText = `${shortDesc} ${desc}`.trim();
+
+  // 1. Target CI: Check cmdb_ci.name or parse from shortDesc / desc
+  let targetCi = (item['cmdb_ci.name'] || (item.cmdb_ci && typeof item.cmdb_ci === 'object' ? item.cmdb_ci.name : item.cmdb_ci) || '').trim();
+  // ignore 32-character hex sys_ids
+  if (targetCi && targetCi.length === 32 && /^[0-9a-f]+$/i.test(targetCi)) {
+    targetCi = '';
+  }
+  if (!targetCi) {
+    // Match common enterprise CI patterns: PNE-DC-007, BLR-DC-002, BLR-DC-10, BLR-APP-001, PRD-APP-SRV01, DC01.corp.internal, etc.
+    const ciMatch = fullText.match(/\b([A-Z]{3}-[A-Z0-9]+-[0-9]{1,4}|PRD-[A-Z0-9-]+|DC[0-9]{1,2}\.corp\.internal)\b/i);
+    if (ciMatch) {
+      targetCi = ciMatch[1].toUpperCase();
+    }
+  }
+
+  // 2. Service Daemon: Parse daemon / service name if present
+  let serviceName = '';
+  const svcRegexes = [
+    /(?:service\s+name:\s*|service:\s*)([A-Za-z0-9_\-]+)/i,
+    /(?:service\s+)([A-Za-z0-9_\-]+)(?:\s+on|\s+service|\s+daemon)/i,
+    /(?:restart|recycle|bounce|stop|start)\s+(?:service\s+)?([A-Za-z0-9_\-]+)\s+service/i,
+    /\b(Netlogon|W3SVC|KDC|Spooler|MSSQLSERVER|nginx|apache2|snmpd|sshd|Tomcat|docker|mysqld|postgresql)\b/i
+  ];
+  for (const rx of svcRegexes) {
+    const m = fullText.match(rx);
+    if (m && m[1]) {
+      const candidate = m[1].trim();
+      const forbidden = ['the', 'a', 'on', 'in', 'at', 'for', 'to', 'server', 'clean', 'domain', 'controller'];
+      if (!forbidden.includes(candidate.toLowerCase())) {
+        serviceName = candidate;
+        break;
+      }
+    }
+  }
+
+  // 3. Location & IP:
+  let ciLocation = (item['location.name'] || (item.location && typeof item.location === 'object' ? item.location.name : item.location) || '').trim();
+  let ciIp = (item['cmdb_ci.ip_address'] || '').trim();
+  if (!ciLocation && targetCi) {
+    const prefix = targetCi.substring(0, 3).toUpperCase();
+    if (prefix === 'BLR') ciLocation = 'Bangalore';
+    else if (prefix === 'PNE') ciLocation = 'Pune';
+    else if (prefix === 'HYD') ciLocation = 'Hyderabad';
+    else if (prefix === 'DEL') ciLocation = 'Delhi';
+    else if (prefix === 'MUM') ciLocation = 'Mumbai';
+  }
+
+  // 4. Procedure / Runbook:
+  let procedureId = '';
+  let procedureName = '';
+  if (serviceName) {
+    const sLower = serviceName.toLowerCase();
+    if (sLower === 'netlogon' || sLower === 'kdc' || fullText.toLowerCase().includes('domain controller')) {
+      procedureId = 'PROC-WIN-001';
+      procedureName = 'Windows Service Clean Restart';
+    } else if (sLower === 'w3svc' || fullText.toLowerCase().includes('iis')) {
+      procedureId = 'PROC-WIN-001';
+      procedureName = 'Windows Service Clean Restart';
+    } else if (sLower === 'spooler') {
+      procedureId = 'PROC-WIN-001';
+      procedureName = 'Windows Service Clean Restart';
+    } else if (sLower === 'mssqlserver' || sLower.includes('sql')) {
+      procedureId = 'PROC-DB-002';
+      procedureName = 'SQL Server Database Engine Recycling';
+    } else if (sLower === 'nginx' || sLower === 'apache2') {
+      procedureId = 'PROC-LNX-003';
+      procedureName = 'Linux Reverse Proxy Service Restart';
+    } else if (sLower === 'snmpd') {
+      procedureId = 'PROC-NET-004';
+      procedureName = 'Network Telemetry & SNMP Agent Restart';
+    } else {
+      procedureId = 'PROC-WIN-001';
+      procedureName = 'Windows Service Clean Restart';
+    }
+  }
+
+  // 5. Assignment group:
+  const assignmentGroup = (item['assignment_group.name'] || (item.assignment_group && typeof item.assignment_group === 'object' ? item.assignment_group.name : item.assignment_group) || '').trim();
+
+  return {
+    targetCi,
+    serviceName,
+    ciLocation,
+    ciIp,
+    procedureId,
+    procedureName,
+    assignmentGroup
+  };
+}
+
 export async function getLiveEngineeringRequests(customConfig = {}) {
   const { sessionCookies, gCkToken, instanceUrl } = await authenticate(customConfig);
   const headers = { 'Cookie': sessionCookies, 'X-UserToken': gCkToken, 'Accept': 'application/json' };
 
   // Fetch from incident, sc_request, and sc_req_item
   const [incRes, reqRes, ritmRes] = await Promise.allSettled([
-    fetch(`${instanceUrl}/api/now/table/incident?sysparm_limit=10&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,state,priority,sys_id,sys_created_on,assignment_group.name,cmdb_ci.name`, { headers }),
-    fetch(`${instanceUrl}/api/now/table/sc_request?sysparm_limit=10&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,request_state,stage,sys_id,sys_created_on,assignment_group.name`, { headers }),
-    fetch(`${instanceUrl}/api/now/table/sc_req_item?sysparm_limit=10&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,state,stage,sys_id,sys_created_on,assignment_group.name`, { headers })
+    fetch(`${instanceUrl}/api/now/table/incident?sysparm_limit=15&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,state,priority,sys_id,sys_created_on,assignment_group,assignment_group.name,cmdb_ci,cmdb_ci.name,location,location.name`, { headers }),
+    fetch(`${instanceUrl}/api/now/table/sc_request?sysparm_limit=15&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,request_state,stage,sys_id,sys_created_on,assignment_group,assignment_group.name,cmdb_ci,cmdb_ci.name,location,location.name`, { headers }),
+    fetch(`${instanceUrl}/api/now/table/sc_req_item?sysparm_limit=15&sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,description,state,stage,sys_id,sys_created_on,assignment_group,assignment_group.name,cmdb_ci,cmdb_ci.name,configuration_item,configuration_item.name,cat_item.name`, { headers })
   ]);
 
   const rawIncidents = (incRes.status === 'fulfilled' && incRes.value.ok) ? ((await incRes.value.json()).result || []) : [];
   const rawRequests = (reqRes.status === 'fulfilled' && reqRes.value.ok) ? ((await reqRes.value.json()).result || []) : [];
   const rawRitems = (ritmRes.status === 'fulfilled' && ritmRes.value.ok) ? ((await ritmRes.value.json()).result || []) : [];
 
-  const demoCis = [
-    {
-      ci: 'BLR-APP-001',
-      loc: 'Bangalore',
-      ip: '10.10.70.1',
-      group: 'Application Support',
-      service: 'W3SVC',
-      proc: 'PROC-WIN-001',
-      procName: 'Windows IIS Web Service Clean Restart',
-      desc: 'IIS Web Service unresponsive on production node BLR-APP-001. Requires graceful restart and port 80/443 check.'
-    },
-    {
-      ci: 'PNE-DB-005',
-      loc: 'Pune',
-      ip: '10.20.60.5',
-      group: 'End User Computing', // Mismatched group: Should be Application Support
-      service: 'MSSQLSERVER',
-      proc: 'PROC-DB-002',
-      procName: 'SQL Server Database Engine Recycling',
-      desc: 'Database connection pool saturated on host PNE-DB-005. Needs SQL Server engine recycling.'
-    },
-    {
-      ci: '', // MISSING TARGET CI & LOCATION
-      loc: '',
-      ip: '',
-      group: 'Application Support',
-      service: 'W3SVC',
-      proc: 'PROC-WIN-001',
-      procName: 'Windows IIS Web Service Clean Restart',
-      desc: 'Internal web portal throwing HTTP 503 error, service restart requested by business users. Specific server host not provided.'
-    },
-    {
-      ci: 'HYD-VM-014',
-      loc: 'Hyderabad',
-      ip: '10.30.50.14',
-      group: 'Access Management', // Mismatched group: Should be Server Infrastructure
-      service: '', // MISSING SERVICE DAEMON
-      proc: 'PROC-LNX-003',
-      procName: 'Linux Nginx Reverse Proxy Service Restart',
-      desc: 'Linux reverse proxy node HYD-VM-014 showing connection dropouts. Daemon name omitted in request.'
-    },
-    {
-      ci: 'DEL-SW-002',
-      loc: 'Delhi',
-      ip: '10.50.20.2',
-      group: 'Network Services',
-      service: 'snmpd',
-      proc: 'PROC-NET-004',
-      procName: 'Network Telemetry & SNMP Agent Restart',
-      desc: 'SNMP telemetry reporting halted on core switch DEL-SW-002. Restart telemetry service.'
-    }
-  ];
-
   const enrichedItems = [];
 
   // 1. Process Incidents from ServiceNow
   if (rawIncidents.length > 0) {
-    rawIncidents.forEach((item, idx) => {
-      const ciMeta = demoCis[idx % demoCis.length];
+    rawIncidents.forEach((item) => {
+      const meta = extractTicketMetadata(item);
       const stateMap = {
         '1': 'New',
         '2': 'In Progress',
@@ -658,20 +700,20 @@ export async function getLiveEngineeringRequests(customConfig = {}) {
         ticketType: 'Incident',
         table: 'incident',
         sysId: item.sys_id,
-        shortDescription: item.short_description || `Incident on ${ciMeta.ci}`,
-        description: item.description || item.short_description || ciMeta.desc,
+        shortDescription: item.short_description || `Incident ${item.number}`,
+        description: item.description || item.short_description || '',
         priority: item.priority === '1' ? '1 - Critical' : item.priority === '2' ? '2 - High' : item.priority === '5' ? '5 - Planning' : '3 - Moderate',
         priorityRaw: item.priority || '3',
         state: stateMap[item.state] || (item.state === '7' || item.state === '6' ? 'Closed Complete' : 'In Progress'),
         rawState: item.state,
         stage: item.state === '7' ? 'Closed' : 'Active Triage',
-        targetCi: item['cmdb_ci.name'] || ciMeta.ci,
-        ciLocation: ciMeta.loc,
-        ciIp: ciMeta.ip,
-        procedureId: ciMeta.proc,
-        procedureName: ciMeta.procName,
-        serviceName: ciMeta.service,
-        assignmentGroup: item['assignment_group.name'] || ciMeta.group,
+        targetCi: meta.targetCi,
+        ciLocation: meta.ciLocation,
+        ciIp: meta.ciIp,
+        procedureId: meta.procedureId,
+        procedureName: meta.procedureName,
+        serviceName: meta.serviceName,
+        assignmentGroup: meta.assignmentGroup,
         createdOn: item.sys_created_on,
         directUrl: `${instanceUrl}/nav_to.do?uri=incident.do?sys_id=${item.sys_id}`
       });
@@ -679,77 +721,66 @@ export async function getLiveEngineeringRequests(customConfig = {}) {
   }
 
   // 2. Process Service Requests (sc_request)
-  const reqList = rawRequests.length > 0 ? rawRequests : [
-    { number: 'REQ0010026', sys_id: 'req_sys_001', short_description: 'Infrastructure Service Restart Request', request_state: 'in_progress', stage: 'request_approved' },
-    { number: 'REQ0010027', sys_id: 'req_sys_002', short_description: 'Database Engine Recycling Authorization', request_state: 'requested', stage: 'approval' },
-    { number: 'REQ0010028', sys_id: 'req_sys_003', short_description: 'Web Server Emergency Reboot', request_state: 'closed_complete', stage: 'complete' }
-  ];
-
-  reqList.forEach((item, idx) => {
-    const ciMeta = demoCis[(idx + 1) % demoCis.length];
-    const isClosed = item.request_state === 'closed_complete' || item.stage === 'complete';
-    enrichedItems.push({
-      ritm: item.number,
-      number: item.number,
-      ticketType: 'Service Request',
-      table: 'sc_request',
-      sysId: item.sys_id,
-      shortDescription: item.short_description || `Service Request for ${ciMeta.ci}`,
-      description: item.description || ciMeta.desc,
-      priority: '2 - High',
-      priorityRaw: '2',
-      state: isClosed ? 'Closed Complete' : (item.request_state === 'in_progress' ? 'Work in Progress' : 'Open'),
-      rawState: isClosed ? '3' : '2',
-      stage: item.stage || 'request_approved',
-      targetCi: ciMeta.ci,
-      ciLocation: ciMeta.loc,
-      ciIp: ciMeta.ip,
-      procedureId: ciMeta.proc,
-      procedureName: ciMeta.procName,
-      serviceName: ciMeta.service,
-      assignmentGroup: item['assignment_group.name'] || ciMeta.group,
-      createdOn: item.sys_created_on || new Date().toISOString(),
-      directUrl: `${instanceUrl}/nav_to.do?uri=sc_request.do?sys_id=${item.sys_id}`
+  if (rawRequests.length > 0) {
+    rawRequests.forEach((item) => {
+      const meta = extractTicketMetadata(item);
+      const isClosed = item.request_state === 'closed_complete' || item.stage === 'complete';
+      enrichedItems.push({
+        ritm: item.number,
+        number: item.number,
+        ticketType: 'Service Request',
+        table: 'sc_request',
+        sysId: item.sys_id,
+        shortDescription: item.short_description || `Service Request ${item.number}`,
+        description: item.description || item.short_description || '',
+        priority: '2 - High',
+        priorityRaw: '2',
+        state: isClosed ? 'Closed Complete' : (item.request_state === 'in_progress' ? 'Work in Progress' : 'Open'),
+        rawState: isClosed ? '3' : '2',
+        stage: item.stage || 'request_approved',
+        targetCi: meta.targetCi,
+        ciLocation: meta.ciLocation,
+        ciIp: meta.ciIp,
+        procedureId: meta.procedureId,
+        procedureName: meta.procedureName,
+        serviceName: meta.serviceName,
+        assignmentGroup: meta.assignmentGroup,
+        createdOn: item.sys_created_on || new Date().toISOString(),
+        directUrl: `${instanceUrl}/nav_to.do?uri=sc_request.do?sys_id=${item.sys_id}`
+      });
     });
-  });
+  }
 
   // 3. Process Requested Items (sc_req_item)
-  const ritmList = rawRitems.length > 0 ? rawRitems : [
-    { number: 'RITM0010026', sys_id: 'ritm_sys_001', short_description: 'IIS Web Service Clean Restart on BLR-APP-001', state: '1', stage: 'request_approved' },
-    { number: 'RITM0010027', sys_id: 'ritm_sys_002', short_description: 'SQL Server DB Engine Recycling on PNE-DB-005', state: '2', stage: 'request_approved' },
-    { number: 'RITM0010028', sys_id: 'ritm_sys_003', short_description: 'Web portal 503 error, service restart requested', state: '1', stage: 'request_approved' },
-    { number: 'RITM0010029', sys_id: 'ritm_sys_004', short_description: 'Linux reverse proxy node HYD-VM-014 service restart', state: '1', stage: 'request_approved' },
-    { number: 'RITM0010030', sys_id: 'ritm_sys_005', short_description: 'SNMP telemetry agent restart on DEL-SW-002', state: '1', stage: 'request_approved' },
-    { number: 'RITM0010038', sys_id: 'ritm_sys_006', short_description: 'Completed IIS Web Recycling BLR-APP-001', state: '3', stage: 'complete' }
-  ];
-
-  ritmList.forEach((item, idx) => {
-    const ciMeta = demoCis[idx % demoCis.length];
-    const isClosed = item.state === '3' || item.stage === 'complete';
-    enrichedItems.push({
-      ritm: item.number,
-      number: item.number,
-      ticketType: 'Request Item',
-      table: 'sc_req_item',
-      sysId: item.sys_id,
-      shortDescription: item.short_description || ciMeta.desc,
-      description: ciMeta.desc,
-      priority: '3 - Moderate',
-      priorityRaw: '3',
-      state: isClosed ? 'Closed Complete' : (item.state === '2' ? 'Work in Progress' : 'Open'),
-      rawState: item.state,
-      stage: item.stage || 'request_approved',
-      targetCi: ciMeta.ci,
-      ciLocation: ciMeta.loc,
-      ciIp: ciMeta.ip,
-      procedureId: ciMeta.proc,
-      procedureName: ciMeta.procName,
-      serviceName: ciMeta.service,
-      assignmentGroup: item['assignment_group.name'] || ciMeta.group,
-      createdOn: item.sys_created_on || new Date().toISOString(),
-      directUrl: `${instanceUrl}/nav_to.do?uri=sc_req_item.do?sys_id=${item.sys_id}`
+  if (rawRitems.length > 0) {
+    rawRitems.forEach((item) => {
+      const meta = extractTicketMetadata(item);
+      const isClosed = item.state === '3' || item.stage === 'complete';
+      enrichedItems.push({
+        ritm: item.number,
+        number: item.number,
+        ticketType: 'Request Item',
+        table: 'sc_req_item',
+        sysId: item.sys_id,
+        shortDescription: item.short_description || `Request Item ${item.number}`,
+        description: item.description || item.short_description || '',
+        priority: '3 - Moderate',
+        priorityRaw: '3',
+        state: isClosed ? 'Closed Complete' : (item.state === '2' ? 'Work in Progress' : 'Open'),
+        rawState: item.state,
+        stage: item.stage || 'request_approved',
+        targetCi: meta.targetCi,
+        ciLocation: meta.ciLocation,
+        ciIp: meta.ciIp,
+        procedureId: meta.procedureId,
+        procedureName: meta.procedureName,
+        serviceName: meta.serviceName,
+        assignmentGroup: meta.assignmentGroup,
+        createdOn: item.sys_created_on || new Date().toISOString(),
+        directUrl: `${instanceUrl}/nav_to.do?uri=sc_req_item.do?sys_id=${item.sys_id}`
+      });
     });
-  });
+  }
 
   return {
     success: true,
@@ -1305,7 +1336,8 @@ export async function evaluateTicketWithAi(input = {}) {
     state = '',
     rawState = '',
     stage = '',
-    procedureId = 'PROC-WIN-001',
+    procedureId = '',
+    callLlm = false,
     endpointUrl = process.env.LOCAL_AI_ENDPOINT || 'http://localhost:8080/v1',
     model = process.env.LOCAL_AI_MODEL || '/models/Qwen3-0.6B-Q4_K_M-Instruct.gguf'
   } = payload;
@@ -1324,7 +1356,7 @@ export async function evaluateTicketWithAi(input = {}) {
       missingFields: [],
       clarificationMessage: '',
       isGroupMatched: true,
-      recommendedGroup: currentGroup,
+      recommendedGroup: currentGroup || 'Unassigned',
       matchedRunbook: null,
       timestamp: new Date().toISOString()
     };
@@ -1346,114 +1378,103 @@ export async function evaluateTicketWithAi(input = {}) {
   ];
 
   const runbooks = {
-    'PROC-WIN-001': { id: 'PROC-WIN-001', name: 'Windows IIS Web Service Clean Restart', defaultGroup: 'Application Support', requiredService: 'W3SVC', targetType: 'Windows Server' },
+    'PROC-WIN-001': { id: 'PROC-WIN-001', name: 'Windows Service Clean Restart', defaultGroup: 'Server Infrastructure', requiredService: serviceName || 'Windows Service', targetType: 'Windows Server' },
     'PROC-DB-002': { id: 'PROC-DB-002', name: 'SQL Server Database Engine Recycling', defaultGroup: 'Application Support', requiredService: 'MSSQLSERVER', targetType: 'Database Host' },
-    'PROC-LNX-003': { id: 'PROC-LNX-003', name: 'Linux Nginx Reverse Proxy Service Restart', defaultGroup: 'Server Infrastructure', requiredService: 'nginx', targetType: 'Linux Server' },
+    'PROC-LNX-003': { id: 'PROC-LNX-003', name: 'Linux Reverse Proxy Service Restart', defaultGroup: 'Server Infrastructure', requiredService: 'nginx', targetType: 'Linux Server' },
     'PROC-NET-004': { id: 'PROC-NET-004', name: 'Network Telemetry & SNMP Agent Restart', defaultGroup: 'Network Services', requiredService: 'snmpd', targetType: 'Network Switch' },
     'PROC-PRN-005': { id: 'PROC-PRN-005', name: 'Print Spooler Subsystem Clean Restart', defaultGroup: 'Server Infrastructure', requiredService: 'Spooler', targetType: 'Windows Server' }
   };
 
-  const matchedRunbook = runbooks[procedureId] || runbooks['PROC-WIN-001'];
+  let matchedRunbook = null;
+  if (procedureId && runbooks[procedureId]) {
+    matchedRunbook = runbooks[procedureId];
+  } else if (serviceName) {
+    const sLower = serviceName.toLowerCase();
+    if (sLower === 'netlogon' || sLower === 'kdc' || sLower === 'w3svc' || sLower === 'spooler') {
+      matchedRunbook = runbooks['PROC-WIN-001'];
+    } else if (sLower === 'mssqlserver' || sLower.includes('sql')) {
+      matchedRunbook = runbooks['PROC-DB-002'];
+    } else if (sLower === 'nginx' || sLower === 'apache2') {
+      matchedRunbook = runbooks['PROC-LNX-003'];
+    } else if (sLower === 'snmpd') {
+      matchedRunbook = runbooks['PROC-NET-004'];
+    }
+  }
 
   // Identify missing parameters
   const missingFields = [];
   if (!targetCi || targetCi.trim() === '' || targetCi.toLowerCase() === 'tbd') {
     missingFields.push('Target CI Hostname');
   }
-  if (!ciLocation || ciLocation.trim() === '') {
-    missingFields.push('CI Datacenter Location / IP Address');
-  }
   if (!serviceName || serviceName.trim() === '' || serviceName.toLowerCase() === 'tbd') {
     missingFields.push('Target Service / Daemon Name');
   }
 
-  const isReadyForAutomation = missingFields.length === 0;
-  const readinessScore = isReadyForAutomation ? 100 : Math.max(30, 100 - (missingFields.length * 35));
+  const isReadyForAutomation = Boolean(matchedRunbook && missingFields.length === 0);
+  const readinessScore = matchedRunbook
+    ? (isReadyForAutomation ? 100 : Math.max(20, 100 - (missingFields.length * 40)))
+    : 0;
 
   // Load soul.txt rules
   const soulData = readSoulMemory();
   const soulRules = soulData.rules || [];
   const soulRulesSummary = soulRules.map(r => `• [${r.id}] ${r.stage}: ${r.rule} (Decision: ${r.engineerDecision})`).join('\n');
 
-  // Determine prompt to send to real Local AI model
-  const promptText = `Ticket: ${ritm || 'REQ'}
-Summary: ${shortDescription}
-Description: ${description || shortDescription}
-Target CI: ${targetCi || 'Not Specified'}
-Location: ${ciLocation || 'Not Specified'}
-Service: ${serviceName || 'Not Specified'}
-Current Assignment Group: ${currentGroup || 'Unassigned'}
-Matched Runbook: ${matchedRunbook.name} (${matchedRunbook.id})
-
-ACTIVE SOUL MEMORY & ENGINEER DECISION RULES (soul.txt):
-${soulRulesSummary || 'No custom rules logged yet.'}
-
-Analyze this ticket against the 12 corporate ITIL Taxonomy Groups:
-${taxonomyGroups.join(', ')}
-
-Priority Instructions: If any rule in soul.txt applies to this ticket, you MUST follow the engineer's recorded decision rule.
-
-Respond with:
-1. Recommended Support Group (choose strictly one of the 12 groups)
-2. Confidence level (e.g. 98%)
-3. Technical reasoning (cite soul.txt rule ID if applicable)
-4. If parameters are missing (${missingFields.join(', ') || 'None'}), provide a professional customer clarification message requesting the missing details.`;
-
-  let aiRawText = '';
-  let activeModelUsed = model;
-
-  try {
-    const llmRes = await callLocalLlmChat({
-      endpointUrl,
-      model,
-      systemPrompt: 'You are an ITIL Orchestrator. Output structured evaluation for ticket triage and runbook readiness, adhering strictly to active soul.txt rules.',
-      userPrompt: promptText,
-      temperature: 0.1,
-      maxTokens: 350
-    });
-
-    if (llmRes.success && llmRes.text) {
-      aiRawText = llmRes.text;
-      activeModelUsed = llmRes.model || model;
-    }
-  } catch (err) {
-    console.warn('Local LLM call error, using deterministic fallback:', err.message);
-  }
-
   // Check matching rules from soul.txt
   const appliedSoulRules = [];
   const combinedContext = `${shortDescription} ${description} ${serviceName} ${targetCi}`.toLowerCase();
 
   for (const r of soulRules) {
+    // 1. Direct ticket match
+    if (r.ticket && r.ticket.trim().toLowerCase() === (ritm || '').trim().toLowerCase()) {
+      appliedSoulRules.push(r);
+      continue;
+    }
+
     const crit = (r.criteria || '').toLowerCase();
     const ruleText = (r.rule || '').toLowerCase();
-    const isServiceRestart = combinedContext.includes('restart') || combinedContext.includes('service') || combinedContext.includes('recycle') || combinedContext.includes('bounce');
-    const isWebOrApp = combinedContext.includes('iis') || combinedContext.includes('w3svc') || combinedContext.includes('web') || combinedContext.includes('app') || combinedContext.includes('application');
-    const isDb = combinedContext.includes('sql') || combinedContext.includes('database') || combinedContext.includes('mssql') || combinedContext.includes('postgres');
 
-    if ((crit.includes('service restart') || ruleText.includes('service restart')) && isServiceRestart && isWebOrApp) {
-      if (r.engineerDecision && taxonomyGroups.includes(r.engineerDecision)) {
-        appliedSoulRules.push(r);
-      }
-    } else if ((crit.includes('database') || ruleText.includes('database')) && isDb) {
-      if (r.engineerDecision && taxonomyGroups.includes(r.engineerDecision)) {
-        appliedSoulRules.push(r);
-      }
-    } else if (r.ticket && (r.ticket.toLowerCase() === (ritm || '').toLowerCase())) {
+    // Check specific domain / daemon matches
+    if ((crit.includes('netlogon') || ruleText.includes('netlogon')) &&
+        (combinedContext.includes('netlogon') || combinedContext.includes('domain controller'))) {
+      appliedSoulRules.push(r);
+    } else if ((crit.includes('w3svc') || crit.includes('iis')) &&
+               (combinedContext.includes('w3svc') || combinedContext.includes('iis'))) {
+      appliedSoulRules.push(r);
+    } else if ((crit.includes('nginx') || crit.includes('apache')) &&
+               (combinedContext.includes('nginx') || combinedContext.includes('apache'))) {
+      appliedSoulRules.push(r);
+    } else if (crit.includes('redis') && combinedContext.includes('redis')) {
+      appliedSoulRules.push(r);
+    } else if ((crit.includes('database') || crit.includes('sql') || crit.includes('postgres') || crit.includes('oracle')) &&
+               (combinedContext.includes('database') || combinedContext.includes('sql') || combinedContext.includes('postgres') || combinedContext.includes('oracle'))) {
+      appliedSoulRules.push(r);
+    } else if (crit.includes('usb') && combinedContext.includes('usb')) {
+      appliedSoulRules.push(r);
+    } else if (crit.includes('sap') && combinedContext.includes('sap')) {
       appliedSoulRules.push(r);
     }
   }
 
-  // Parse or normalize recommended group from taxonomy
-  let recommendedGroup = matchedRunbook.defaultGroup;
-  let confidence = 96;
-  const lowerAi = aiRawText.toLowerCase();
+  // Base taxonomy recommendation
+  let recommendedGroup = 'Server Infrastructure';
+  let confidence = 94;
 
-  for (const group of taxonomyGroups) {
-    if (lowerAi.includes(group.toLowerCase())) {
-      recommendedGroup = group;
-      break;
-    }
+  if (combinedContext.includes('domain controller') || combinedContext.includes('active directory') || combinedContext.includes('netlogon') || combinedContext.includes('kdc') || combinedContext.includes('server') || combinedContext.includes('windows') || combinedContext.includes('linux') || combinedContext.includes('vm')) {
+    recommendedGroup = 'Server Infrastructure';
+    confidence = 96;
+  } else if (combinedContext.includes('network') || combinedContext.includes('switch') || combinedContext.includes('router') || combinedContext.includes('firewall') || combinedContext.includes('snmp')) {
+    recommendedGroup = 'Network Services';
+    confidence = 95;
+  } else if (combinedContext.includes('database') || combinedContext.includes('sql') || combinedContext.includes('sap') || combinedContext.includes('oracle') || combinedContext.includes('application') || combinedContext.includes('app') || combinedContext.includes('iis')) {
+    recommendedGroup = 'Application Support';
+    confidence = 94;
+  } else if (combinedContext.includes('usb') || combinedContext.includes('pc') || combinedContext.includes('laptop') || combinedContext.includes('desktop') || combinedContext.includes('monitor') || combinedContext.includes('mouse') || combinedContext.includes('keyboard')) {
+    recommendedGroup = 'End User Computing';
+    confidence = 97;
+  } else if (combinedContext.includes('password') || combinedContext.includes('mfa') || combinedContext.includes('unlock') || combinedContext.includes('access') || combinedContext.includes('vpn')) {
+    recommendedGroup = 'Access Management';
+    confidence = 98;
   }
 
   // If a Soul Memory rule explicitly applies, give it ultimate precedence
@@ -1463,27 +1484,75 @@ Respond with:
     confidence = 99;
   }
 
-  // Formulate clarification draft if missing fields exist
-  let clarificationMessage = '';
-  if (!isReadyForAutomation) {
-    clarificationMessage = `Dear Requester,\n\nIn order to safely execute automated remediation (${matchedRunbook.name}), please provide the following required details:\n` +
-      missingFields.map(f => `• ${f}`).join('\n') +
-      `\n\nThe automation execution gate will remain on hold until these parameters are confirmed in ServiceNow.`;
-  }
-
   // Formulate technical reasoning
   let reasoning = '';
   if (appliedSoulRules.length > 0) {
     const topRule = appliedSoulRules[0];
-    reasoning = `🧠 [Soul Memory Rule Applied: ${topRule.id}] ${topRule.rule} (Engineer Rationale: ${topRule.reason})`;
-  } else if (recommendedGroup === 'Application Support') {
-    reasoning = `The ticket requests application service (${serviceName || 'IIS Web / SQL Server'}) remediation on ${targetCi || 'target node'}. Handled by Application Support under the ITIL taxonomy.`;
+    reasoning = `[Soul Memory Rule Applied: ${topRule.id}] ${topRule.rule || topRule.criteria}${topRule.reason ? ` (${topRule.reason})` : ''}`;
   } else if (recommendedGroup === 'Server Infrastructure') {
-    reasoning = `The ticket involves server OS daemons / Linux services on ${targetCi || 'host'}. Belongs to Server Infrastructure.`;
+    reasoning = `The ticket involves server OS daemons / Domain Controller services (${serviceName || 'Server infrastructure'}). Routed to Server Infrastructure under ITIL taxonomy.`;
+  } else if (recommendedGroup === 'Application Support') {
+    reasoning = `The ticket involves application software or database operations. Handled by Application Support under ITIL taxonomy.`;
   } else if (recommendedGroup === 'Network Services') {
-    reasoning = `The ticket pertains to network switch telemetry and SNMP daemons on ${targetCi || 'device'}. Belongs to Network Services.`;
+    reasoning = `The ticket pertains to networking hardware or telemetry. Assigned to Network Services.`;
+  } else if (recommendedGroup === 'End User Computing') {
+    reasoning = `The ticket relates to end-user workplace hardware and peripherals. Routed to End User Computing.`;
   } else {
-    reasoning = `Ticket aligned to ${recommendedGroup} according to Enterprise ITSM Taxonomy criteria.`;
+    reasoning = `Ticket aligned to ${recommendedGroup} according to Enterprise ITIL Taxonomy criteria.`;
+  }
+
+  let aiRawText = '';
+  let activeModelUsed = 'ITIL Deterministic + Soul Memory Engine';
+
+  // Only invoke LLM when explicitly requested (e.g. user clicks "Consult Local LLM")
+  if (callLlm) {
+    activeModelUsed = model;
+    const promptText = `Ticket: ${ritm || 'REQ'}
+Summary: ${shortDescription}
+Description: ${description || shortDescription}
+Target CI: ${targetCi || 'Not Specified'}
+Location: ${ciLocation || 'Not Specified'}
+Service: ${serviceName || 'Not Specified'}
+Current Assignment Group: ${currentGroup || 'Unassigned'}
+Matched Runbook: ${matchedRunbook ? matchedRunbook.name : 'None'}
+
+ACTIVE SOUL MEMORY & ENGINEER DECISION RULES (soul.txt):
+${soulRulesSummary || 'No custom rules logged yet.'}
+
+Analyze this ticket against the corporate ITIL Taxonomy Groups:
+${taxonomyGroups.join(', ')}
+
+Provide:
+1. Recommended Support Group (must be one of the listed groups)
+2. Confidence level
+3. Technical reasoning citing any matching soul.txt rule`;
+
+    try {
+      const llmRes = await callLocalLlmChat({
+        endpointUrl,
+        model,
+        systemPrompt: 'You are an ITIL Orchestrator. Output concise structured evaluation for ticket triage adhering strictly to soul.txt rules.',
+        userPrompt: promptText,
+        temperature: 0.1,
+        maxTokens: 250
+      });
+
+      if (llmRes.success && llmRes.text) {
+        aiRawText = llmRes.text;
+        activeModelUsed = llmRes.model || model;
+        reasoning += `\n\n[Local AI Co-Pilot (${activeModelUsed}) Analysis]: ${aiRawText}`;
+      }
+    } catch (err) {
+      console.warn('Local LLM call error, using deterministic evaluation:', err.message);
+    }
+  }
+
+  // Formulate clarification draft if missing fields exist
+  let clarificationMessage = '';
+  if (!isReadyForAutomation && matchedRunbook) {
+    clarificationMessage = `Dear Requester,\n\nIn order to safely execute automated remediation (${matchedRunbook.name}), please provide the following required details:\n` +
+      missingFields.map(f => `• ${f}`).join('\n') +
+      `\n\nThe automation execution gate will remain on hold until these parameters are confirmed in ServiceNow.`;
   }
 
   return {
@@ -1491,7 +1560,7 @@ Respond with:
     ticketNumber: ritm,
     currentGroup,
     recommendedGroup,
-    isGroupMatched: currentGroup.trim().toLowerCase() === recommendedGroup.trim().toLowerCase(),
+    isGroupMatched: currentGroup ? (currentGroup.trim().toLowerCase() === recommendedGroup.trim().toLowerCase()) : false,
     confidence,
     reasoning,
     matchedRunbook,

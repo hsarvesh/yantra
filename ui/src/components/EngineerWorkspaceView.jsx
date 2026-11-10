@@ -61,8 +61,10 @@ import {
   ContentCopy,
   EditOutlined,
   DeleteOutline,
-  AddCircleOutline
+  AddCircleOutline,
+  PlayCircleOutline
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 const TAXONOMY_GROUPS = [
   'Application Support',
@@ -87,7 +89,7 @@ export default function EngineerWorkspaceView({
   const [loading, setLoading] = useState(true);
   const [liveRequests, setLiveRequests] = useState([]);
   const [selectedSysId, setSelectedSysId] = useState(null);
-  const [selectedService, setSelectedService] = useState('W3SVC');
+  const [selectedService, setSelectedService] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [logs, setLogs] = useState([]);
   const [executionFinished, setExecutionFinished] = useState(false);
@@ -109,9 +111,9 @@ export default function EngineerWorkspaceView({
   // Missing Details Input Drawer/Dialog
   const [showInputDrawer, setShowInputDrawer] = useState(false);
   const [inputCi, setInputCi] = useState('');
-  const [inputLocation, setInputLocation] = useState('Bangalore');
-  const [inputIp, setInputIp] = useState('10.10.70.1');
-  const [inputService, setInputService] = useState('W3SVC');
+  const [inputLocation, setInputLocation] = useState('');
+  const [inputIp, setInputIp] = useState('');
+  const [inputService, setInputService] = useState('');
 
   // Work Notes Customization State
   const [engineerComments, setEngineerComments] = useState('Service restart executed and verified clean. All port listeners and process dependencies confirmed operational.');
@@ -176,8 +178,8 @@ export default function EngineerWorkspaceView({
         if (data.counts) setCounts(data.counts);
         const initial = data.requests[0];
         setSelectedSysId(initial?.sysId);
-        setSelectedService(initial?.serviceName || 'W3SVC');
-        evaluateTicketWithLlm(initial);
+        setSelectedService(initial?.serviceName || '');
+        evaluateTicketWithLlm(initial, false);
       }
     } catch (e) {
       console.error('Failed to load engineering requests from ServiceNow:', e);
@@ -192,20 +194,20 @@ export default function EngineerWorkspaceView({
   }, []);
 
   const currentReq = liveRequests.find(r => r.sysId === selectedSysId) || liveRequests[0] || {
-    ritm: 'RITM0010026',
-    number: 'RITM0010026',
-    ticketType: 'Request Item',
-    table: 'sc_req_item',
-    targetCi: 'BLR-APP-001',
-    ciLocation: 'Bangalore',
-    ciIp: '10.10.70.1',
-    procedureId: 'PROC-WIN-001',
-    procedureName: 'Windows IIS Web Service Clean Restart',
-    serviceName: 'W3SVC',
-    assignmentGroup: 'Application Support',
-    stage: 'request_approved',
-    state: 'Open',
-    directUrl: `${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : '').replace(/\/+$/, '')}/sc_req_item_list.do`
+    ritm: '',
+    number: '',
+    ticketType: 'Work Item',
+    table: 'incident',
+    targetCi: '',
+    ciLocation: '',
+    ciIp: '',
+    procedureId: '',
+    procedureName: '',
+    serviceName: '',
+    assignmentGroup: '',
+    stage: 'New',
+    state: 'New',
+    directUrl: ''
   };
 
   // Filtered requests based on active tab and search query
@@ -222,12 +224,7 @@ export default function EngineerWorkspaceView({
     return true;
   });
 
-  const currentProcedure = procedures.find(p => p.id === currentReq?.procedureId) || procedures[0] || {
-    id: 'PROC-WIN-001',
-    name: 'Windows Service Clean Restart',
-    maturityState: 'supervised',
-    consecutiveSuccesses: 14
-  };
+  const currentProcedure = procedures.find(p => p.id === currentReq?.procedureId) || null;
 
   // Immediate abort guard for Closed Complete / Resolved tickets (Incidents, Requests, RITMs)
   const isTicketClosed = Boolean(
@@ -244,8 +241,8 @@ export default function EngineerWorkspaceView({
     aiEvaluation?.isClosed
   );
 
-  // Evaluate Ticket with Real Local AI Engine
-  const evaluateTicketWithLlm = async (ticket) => {
+  // Evaluate Ticket with Real Local AI Engine & Soul Memory
+  const evaluateTicketWithLlm = async (ticket, callLlm = false) => {
     const t = ticket || currentReq;
     const isClosed = Boolean(
       t.state === 'Closed Complete' ||
@@ -271,7 +268,7 @@ export default function EngineerWorkspaceView({
         missingFields: [],
         clarificationMessage: '',
         isGroupMatched: true,
-        recommendedGroup: t.assignmentGroup,
+        recommendedGroup: t.assignmentGroup || 'Unassigned',
         modelUsed: 'Governance Guard'
       });
       return;
@@ -290,18 +287,19 @@ export default function EngineerWorkspaceView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ritm: t.ritm || t.number,
-          table: t.table || 'sc_req_item',
+          table: t.table || 'incident',
           shortDescription: t.shortDescription,
           description: t.description || t.shortDescription,
-          targetCi: t.targetCi,
-          ciLocation: t.ciLocation,
-          ciIp: t.ciIp,
-          serviceName: t.serviceName || selectedService,
-          currentGroup: t.assignmentGroup,
+          targetCi: t.targetCi || '',
+          ciLocation: t.ciLocation || '',
+          ciIp: t.ciIp || '',
+          serviceName: t.serviceName || selectedService || '',
+          currentGroup: t.assignmentGroup || '',
           state: t.state,
           rawState: t.rawState,
           stage: t.stage,
-          procedureId: t.procedureId || 'PROC-WIN-001',
+          procedureId: t.procedureId || '',
+          callLlm,
           endpointUrl: savedConfig?.endpointUrl || 'http://localhost:8080/v1',
           model: savedConfig?.model || '/models/Qwen3-0.6B-Q4_K_M-Instruct.gguf'
         })
@@ -382,7 +380,7 @@ export default function EngineerWorkspaceView({
   // Open the Teach Modal prefilled for Routing override
   const openTeachModalForRouting = (overrideGroup = 'Application Support') => {
     setTeachStage('Triage / Assignment Routing');
-    setTeachCriteria(`Service restart requested for ${currentReq.serviceName || 'IIS Web / Application service'} (CI: ${currentReq.targetCi || 'BLR-APP-001'})`);
+    setTeachCriteria(`Service restart requested for ${currentReq.serviceName || 'service'} (CI: ${currentReq.targetCi || 'unspecified'})`);
     setTeachDefaultRec(aiEvaluation?.recommendedGroup || currentReq.assignmentGroup || 'Server Infrastructure (OS Team)');
     setTeachEngineerDecision(overrideGroup);
     setTeachRule(`When a service restart is requested for ${currentReq.serviceName || 'web/application services'}, route to ${overrideGroup} instead of Server Infrastructure.`);
@@ -517,7 +515,7 @@ export default function EngineerWorkspaceView({
   // Open Create Rule Modal
   const handleOpenCreateRule = () => {
     setTeachStage('Triage / Assignment Routing');
-    setTeachCriteria(`Service restart requested for ${currentReq?.serviceName || 'IIS Web / Application service'} (CI: ${currentReq?.targetCi || 'BLR-APP-001'})`);
+    setTeachCriteria(`Service restart requested for ${currentReq?.serviceName || 'service'} (CI: ${currentReq?.targetCi || 'unspecified'})`);
     setTeachDefaultRec(aiEvaluation?.recommendedGroup || currentReq?.assignmentGroup || 'Server Infrastructure (OS Team)');
     setTeachEngineerDecision('Application Support');
     setTeachRule('');
@@ -650,10 +648,10 @@ export default function EngineerWorkspaceView({
     }
     const updatedTicket = {
       ...currentReq,
-      targetCi: inputCi || currentReq.targetCi || 'BLR-APP-001',
-      ciLocation: inputLocation || currentReq.ciLocation || 'Bangalore',
-      ciIp: inputIp || currentReq.ciIp || '10.10.70.1',
-      serviceName: inputService || currentReq.serviceName || 'W3SVC',
+      targetCi: inputCi || currentReq.targetCi || '',
+      ciLocation: inputLocation || currentReq.ciLocation || '',
+      ciIp: inputIp || currentReq.ciIp || '',
+      serviceName: inputService || currentReq.serviceName || '',
       state: currentReq.table === 'incident' ? 'In Progress' : 'Work in Progress'
     };
 
@@ -666,7 +664,7 @@ export default function EngineerWorkspaceView({
     setInfoRequestSent(false);
 
     // Re-evaluate with Local AI
-    await evaluateTicketWithLlm(updatedTicket);
+    await evaluateTicketWithLlm(updatedTicket, false);
   };
 
   // Service Restart Simulation Execution
@@ -675,6 +673,16 @@ export default function EngineerWorkspaceView({
       alert('Execution Aborted: Ticket is already Closed Complete in ServiceNow.');
       return;
     }
+    const targetCiName = currentReq.targetCi || inputCi || '';
+    const locationName = currentReq.ciLocation || inputLocation || 'Unknown Datacenter';
+    const ipAddr = currentReq.ciIp || inputIp || 'DHCP/CMDB';
+    const svc = selectedService || currentReq.serviceName || '';
+
+    if (!targetCiName || !svc) {
+      alert('Execution Aborted: Target Host and Service Daemon must be specified before initiating execution.');
+      return;
+    }
+
     setIsExecuting(true);
     setExecutionFinished(false);
     setLogs([]);
@@ -687,11 +695,6 @@ export default function EngineerWorkspaceView({
     // Compute synthetic SHA-256 seal
     const generatedHash = `SHA256:${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     setExecutionHash(generatedHash);
-
-    const targetCiName = currentReq.targetCi || inputCi || 'BLR-APP-001';
-    const locationName = currentReq.ciLocation || inputLocation || 'Bangalore';
-    const ipAddr = currentReq.ciIp || inputIp || '10.10.70.1';
-    const svc = selectedService || currentReq.serviceName || 'W3SVC';
 
     const stepLogs = [
       { text: `[${timeStr}] [ORCHESTRATOR] Ingested approved ticket ${currentReq.ritm} from ServiceNow Table API.`, color: '#38bdf8' },
@@ -756,8 +759,8 @@ export default function EngineerWorkspaceView({
       const logsExcerpt = logs.map(l => l.text).join('\n');
       const userPrompt = `Summarize the following automated service restart execution logs into an executive ServiceNow Work Note entry:
 Ticket: ${currentReq.ritm}
-Target CI: ${currentReq.targetCi || inputCi || 'BLR-APP-001'} (${currentReq.ciLocation || inputLocation})
-Service: ${selectedService}
+Target CI: ${currentReq.targetCi || inputCi || '—'} (${currentReq.ciLocation || inputLocation || 'Unspecified'})
+Service: ${selectedService || currentReq.serviceName || '—'}
 Cryptographic Seal: ${executionHash}
 
 Terminal Logs:
@@ -806,7 +809,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
           table: currentReq.table || 'sc_req_item',
           sysId: currentReq.sysId,
           ticketNumber: currentReq.ritm || currentReq.number,
-          targetCi: currentReq.targetCi || inputCi || 'BLR-APP-001',
+          targetCi: currentReq.targetCi || inputCi || '',
           workNotes: logsText,
           comments: engineerComments,
           sha256Hash: executionHash,
@@ -841,43 +844,34 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
     }
   };
 
-  const isAutomationReady = aiEvaluation ? aiEvaluation.isReadyForAutomation : Boolean(currentReq.targetCi && currentReq.serviceName);
+  const isAutomationReady = Boolean(
+    !isTicketClosed &&
+    currentReq.procedureId &&
+    currentReq.targetCi &&
+    (currentReq.serviceName || selectedService) &&
+    (aiEvaluation ? aiEvaluation.isReadyForAutomation : true)
+  );
 
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              Engineer Execution Hub (Autonomous AI & Human-in-the-Loop)
-            </Typography>
-            <Chip
-              size="small"
-              icon={<VerifiedUserOutlined sx={{ fontSize: 14 }} />}
-              label="Live ServiceNow & Local AI Orchestration"
-              color="primary"
-              sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-            />
-          </Box>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            Multi-stage deterministic ITIL workflow: Taxonomy assignment routing, runbook completeness evaluation, missing parameter handling with 'Waiting for User Input', and verified execution.
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+      <PageHeader
+        title="Engineer Execution Hub"
+        description="Multi-stage deterministic ITIL workflow: Taxonomy assignment routing, runbook completeness evaluation, missing parameter handling, and verified execution."
+        icon={<PlayCircleOutline />}
+        iconColor="#0284c7"
+        actions={
           <Button
             size="small"
             variant="outlined"
             startIcon={loading ? <CircularProgress size={14} /> : <Refresh />}
             onClick={fetchLiveRequests}
             disabled={loading}
-            sx={{ textTransform: 'none', borderRadius: 1.5 }}
           >
-            Refresh SNow Queue
+            Refresh Queue
           </Button>
-        </Box>
-      </Box>
+        }
+      />
 
       {/* Main Grid: Ticket Selector & Multi-Stage Execution Panel */}
       <Grid container spacing={2.5}>
@@ -1009,7 +1003,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                       variant="outlined"
                       onClick={() => {
                         setSelectedSysId(req.sysId);
-                        setSelectedService(req.serviceName || 'W3SVC');
+                        setSelectedService(req.serviceName || '');
                         setExecutionFinished(false);
                         setLogs([]);
                         setPublishedResult(null);
@@ -1038,11 +1032,11 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                             missingFields: [],
                             clarificationMessage: '',
                             isGroupMatched: true,
-                            recommendedGroup: req.assignmentGroup,
+                            recommendedGroup: req.assignmentGroup || 'Unassigned',
                             modelUsed: 'Governance Guard'
                           });
                         } else {
-                          evaluateTicketWithLlm(req);
+                          evaluateTicketWithLlm(req, false);
                         }
                       }}
                       sx={{
@@ -1139,7 +1133,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   </Typography>
                 </Box>
                 <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Table: <strong>{currentReq.table || 'sc_req_item'}</strong> • Target CI: <strong>{currentReq.targetCi || 'Unspecified (Missing)'}</strong> • Location: <strong>{currentReq.ciLocation || 'Unspecified'}</strong> • Current Group: <strong>{currentReq.assignmentGroup}</strong>
+                  Table: <strong>{currentReq.table || 'incident'}</strong> • Target CI: <strong>{currentReq.targetCi || '— (Missing CI)'}</strong> • Location: <strong>{currentReq.ciLocation || '—'}</strong> • Current Group: <strong>{currentReq.assignmentGroup || 'Unassigned'}</strong>
                 </Typography>
               </Box>
 
@@ -1244,7 +1238,7 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                     color="primary"
                     startIcon={isEvaluatingAi ? <CircularProgress size={12} color="inherit" /> : <AutoAwesomeOutlined sx={{ fontSize: 14 }} />}
                     disabled={isEvaluatingAi}
-                    onClick={() => evaluateTicketWithLlm(currentReq)}
+                    onClick={() => evaluateTicketWithLlm(currentReq, true)}
                     sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, py: 0.3 }}
                   >
                     {isEvaluatingAi ? 'Consulting Local LLM & soul.txt...' : '🤖 Consult Local LLM & Soul'}
@@ -1529,47 +1523,51 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                 </Box>
 
                 {/* Soul Memory Learned Policy Alert */}
-                {aiEvaluation?.appliedSoulRules?.length > 0 && (
-                  <Alert
-                    severity="info"
-                    icon={<MemoryOutlined sx={{ fontSize: 18, color: '#7c3aed' }} />}
-                    action={
-                      <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
-                        <Button
-                          size="small"
-                          color="inherit"
-                          startIcon={<EditOutlined sx={{ fontSize: 13 }} />}
-                          onClick={() => {
-                            const matching = soulData.rules.find(r => r.id === aiEvaluation.appliedSoulRules[0]);
-                            if (matching) handleOpenEditRule(matching);
-                          }}
-                          sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #d8b4fe', bgcolor: '#ffffff' }}
-                        >
-                          Edit Rule
-                        </Button>
-                        <Button
-                          size="small"
-                          color="error"
-                          startIcon={<DeleteOutline sx={{ fontSize: 13 }} />}
-                          onClick={() => handleDeleteRule(aiEvaluation.appliedSoulRules[0])}
-                          sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #fecaca', bgcolor: '#ffffff' }}
-                        >
-                          Delete
-                        </Button>
-                      </Box>
-                    }
-                    sx={{
-                      mb: 1.5,
-                      py: 0.5,
-                      borderRadius: 1.5,
-                      bgcolor: '#faf5ff',
-                      border: '1px solid #e9d5ff',
-                      '& .MuiAlert-message': { fontSize: '0.76rem', color: '#581c87' }
-                    }}
-                  >
-                    <strong>Persistent Soul Memory Override Active:</strong> Matching rule <code>{aiEvaluation.appliedSoulRules[0]}</code> in <code>soul.txt</code> dictates that service restart requests for IIS / Web applications route to <strong>Application Support</strong> instead of OS Team.
-                  </Alert>
-                )}
+                {aiEvaluation?.appliedSoulRules?.length > 0 && (() => {
+                  const matching = soulData.rules.find(r => r.id === aiEvaluation.appliedSoulRules[0]) || aiEvaluation?.appliedSoulRulesDetails?.[0];
+                  const ruleText = matching?.rule || matching?.criteria || 'Policy rule applied.';
+                  const targetGroup = matching?.engineerDecision || aiEvaluation?.recommendedGroup || 'Server Infrastructure';
+                  return (
+                    <Alert
+                      severity="info"
+                      icon={<MemoryOutlined sx={{ fontSize: 18, color: '#7c3aed' }} />}
+                      action={
+                        <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
+                          <Button
+                            size="small"
+                            color="inherit"
+                            startIcon={<EditOutlined sx={{ fontSize: 13 }} />}
+                            onClick={() => {
+                              if (matching) handleOpenEditRule(matching);
+                            }}
+                            sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #d8b4fe', bgcolor: '#ffffff' }}
+                          >
+                            Edit Rule
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteOutline sx={{ fontSize: 13 }} />}
+                            onClick={() => handleDeleteRule(aiEvaluation.appliedSoulRules[0])}
+                            sx={{ textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, borderRadius: 1.5, border: '1px solid #fecaca', bgcolor: '#ffffff' }}
+                          >
+                            Delete
+                          </Button>
+                        </Box>
+                      }
+                      sx={{
+                        mb: 1.5,
+                        py: 0.5,
+                        borderRadius: 1.5,
+                        bgcolor: '#faf5ff',
+                        border: '1px solid #e9d5ff',
+                        '& .MuiAlert-message': { fontSize: '0.76rem', color: '#581c87' }
+                      }}
+                    >
+                      <strong>Persistent Soul Memory Override Active:</strong> Matching rule <code>{aiEvaluation.appliedSoulRules[0]}</code> in <code>soul.txt</code> dictates: "{ruleText}" → Routes to <strong>{targetGroup}</strong>.
+                    </Alert>
+                  );
+                })()}
 
                 <Grid container spacing={1.5} alignItems="center">
                   <Grid item xs={12} sm={6}>
@@ -1692,8 +1690,8 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   </Box>
                   <Chip
                     size="small"
-                    label={isTicketClosed ? "Lifecycle Terminated (Closed)" : (aiEvaluation?.matchedRunbook?.name || currentProcedure?.name)}
-                    color={isTicketClosed ? "default" : "info"}
+                    label={isTicketClosed ? "Lifecycle Terminated (Closed)" : (currentReq?.procedureName || aiEvaluation?.matchedRunbook?.name || "No Runbook Assigned")}
+                    color={isTicketClosed ? "default" : ((currentReq?.procedureName || aiEvaluation?.matchedRunbook) ? "info" : "default")}
                     sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                   />
                 </Box>
@@ -1701,19 +1699,21 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                 {/* Readiness Progress Bar */}
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: isTicketClosed ? '#64748b' : (isAutomationReady ? '#16a34a' : '#d97706') }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: isTicketClosed ? '#64748b' : ((!currentReq?.procedureId && !aiEvaluation?.matchedRunbook) ? '#64748b' : (isAutomationReady ? '#16a34a' : '#d97706')) }}>
                       {isTicketClosed
                         ? '🔒 Ticket Closed Complete — Further Action Aborted'
-                        : (isAutomationReady ? '✓ 100% Ready for Automated Execution' : `⚠️ Readiness: ${aiEvaluation?.readinessScore || 40}% — Missing Required Runbook Parameters`)}
+                        : ((!currentReq?.procedureId && !aiEvaluation?.matchedRunbook)
+                          ? 'ℹ️ No Automated Runbook Applicable for this Ticket'
+                          : (isAutomationReady ? '✓ 100% Ready for Automated Execution' : `⚠️ Readiness: ${aiEvaluation?.readinessScore || 40}% — Missing Required Runbook Parameters`))}
                     </Typography>
                     <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569' }}>
-                      {isTicketClosed ? '100% Closed' : `${aiEvaluation?.readinessScore || (isAutomationReady ? 100 : 40)}%`}
+                      {isTicketClosed ? '100% Closed' : ((!currentReq?.procedureId && !aiEvaluation?.matchedRunbook) ? 'N/A' : `${aiEvaluation?.readinessScore || (isAutomationReady ? 100 : 40)}%`)}
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={isTicketClosed ? 100 : (aiEvaluation?.readinessScore || (isAutomationReady ? 100 : 40))}
-                    color={isTicketClosed ? 'inherit' : (isAutomationReady ? 'success' : 'warning')}
+                    value={isTicketClosed ? 100 : ((!currentReq?.procedureId && !aiEvaluation?.matchedRunbook) ? 0 : (aiEvaluation?.readinessScore || (isAutomationReady ? 100 : 40)))}
+                    color={isTicketClosed ? 'inherit' : (isAutomationReady ? 'success' : ((!currentReq?.procedureId && !aiEvaluation?.matchedRunbook) ? 'inherit' : 'warning'))}
                     sx={{ height: 8, borderRadius: 4 }}
                   />
                 </Box>
@@ -1724,16 +1724,16 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                     <Box sx={{ p: 1, borderRadius: 1.5, border: '1px solid', borderColor: currentReq.targetCi ? '#86efac' : '#fca5a5', bgcolor: currentReq.targetCi ? '#f0fdf4' : '#fef2f2' }}>
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.65rem' }}>TARGET HOST</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem', color: currentReq.targetCi ? '#15803d' : '#b91c1c' }}>
-                        {currentReq.targetCi || '❌ Missing CI'}
+                        {currentReq.targetCi ? currentReq.targetCi : '— (Missing CI)'}
                       </Typography>
                     </Box>
                   </Grid>
 
                   <Grid item xs={6} sm={3}>
-                    <Box sx={{ p: 1, borderRadius: 1.5, border: '1px solid', borderColor: currentReq.ciLocation ? '#86efac' : '#fca5a5', bgcolor: currentReq.ciLocation ? '#f0fdf4' : '#fef2f2' }}>
+                    <Box sx={{ p: 1, borderRadius: 1.5, border: '1px solid', borderColor: currentReq.ciLocation ? '#86efac' : '#e2e8f0', bgcolor: currentReq.ciLocation ? '#f0fdf4' : '#f8fafc' }}>
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.65rem' }}>LOCATION / IP</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem', color: currentReq.ciLocation ? '#15803d' : '#b91c1c' }}>
-                        {currentReq.ciLocation ? `${currentReq.ciLocation} (${currentReq.ciIp})` : '❌ Missing Location'}
+                      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem', color: currentReq.ciLocation ? '#15803d' : '#64748b' }}>
+                        {currentReq.ciLocation ? `${currentReq.ciLocation}${currentReq.ciIp ? ` (${currentReq.ciIp})` : ''}` : '—'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -1742,16 +1742,16 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                     <Box sx={{ p: 1, borderRadius: 1.5, border: '1px solid', borderColor: currentReq.serviceName ? '#86efac' : '#fca5a5', bgcolor: currentReq.serviceName ? '#f0fdf4' : '#fef2f2' }}>
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.65rem' }}>SERVICE DAEMON</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem', color: currentReq.serviceName ? '#15803d' : '#b91c1c' }}>
-                        {currentReq.serviceName || '❌ Missing Service'}
+                        {currentReq.serviceName ? currentReq.serviceName : '— (Missing Service)'}
                       </Typography>
                     </Box>
                   </Grid>
 
                   <Grid item xs={6} sm={3}>
                     <Box sx={{ p: 1, borderRadius: 1.5, border: '1px solid #86efac', bgcolor: '#f0fdf4' }}>
-                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.65rem' }}>CAB APPROVAL</Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.65rem' }}>STAGE / STATE</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#15803d' }}>
-                        ✓ {currentReq.stage || 'Approved'}
+                        ✓ {currentReq.state || currentReq.stage || 'Active'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -1830,51 +1830,62 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                   {isTicketClosed ? 'STAGE 3: RUNBOOK EXECUTION LOCKED (CLOSED COMPLETE)' : 'STAGE 3: RUNBOOK AUTOMATION EXECUTION'}
                 </Typography>
 
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      select
-                      fullWidth
-                      size="small"
-                      label="Service to Restart"
-                      value={selectedService}
-                      onChange={(e) => setSelectedService(e.target.value)}
-                      SelectProps={{ native: true }}
-                      disabled={isTicketClosed || !isAutomationReady || isExecuting}
-                    >
-                      <option value="W3SVC">W3SVC (IIS World Wide Web Publishing Service)</option>
-                      <option value="Spooler">Spooler (Print Spooler Subsystem)</option>
-                      <option value="MSSQLSERVER">MSSQLSERVER (SQL Server Relational Engine)</option>
-                      <option value="nginx">nginx (Linux Reverse Proxy Daemon)</option>
-                      <option value="snmpd">snmpd (SNMP Network Telemetry Daemon)</option>
-                    </TextField>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', gap: 1.5 }}>
-                      <Button
+                {!currentReq.procedureId ? (
+                  <Alert severity="info" sx={{ mb: 1, borderRadius: 1.5, fontSize: '0.8rem' }}>
+                    <strong>No Automated Runbook Matched:</strong> This ticket type does not map to an automated remediation script in the repository. Perform manual resolution or route to the appropriate assignment group in Stage 1.
+                  </Alert>
+                ) : (
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        select
                         fullWidth
-                        variant="contained"
-                        color={isTicketClosed ? 'inherit' : 'primary'}
-                        startIcon={isTicketClosed ? <LockOutlined sx={{ fontSize: 16 }} /> : (isExecuting ? <CircularProgress size={16} color="inherit" /> : <PlayArrow />)}
+                        size="small"
+                        label="Service to Restart"
+                        value={selectedService || currentReq.serviceName || 'Netlogon'}
+                        onChange={(e) => setSelectedService(e.target.value)}
+                        SelectProps={{ native: true }}
                         disabled={isTicketClosed || !isAutomationReady || isExecuting}
-                        onClick={() => handleStartRestartExecution(true)}
-                        sx={{ textTransform: 'none', fontWeight: 700, py: 1 }}
                       >
-                        {isTicketClosed ? 'Execution Aborted (Ticket Closed)' : (isExecuting ? 'Restarting Service...' : `Execute Runbook (${selectedService})`)}
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        disabled={isTicketClosed || !isAutomationReady || isExecuting}
-                        onClick={() => handleStartRestartExecution(false)}
-                        sx={{ textTransform: 'none', whiteSpace: 'nowrap', fontSize: '0.75rem' }}
-                      >
-                        Simulate Failure
-                      </Button>
-                    </Box>
+                        {selectedService && !['Netlogon', 'KDC', 'W3SVC', 'Spooler', 'MSSQLSERVER', 'nginx', 'snmpd'].includes(selectedService) && (
+                          <option value={selectedService}>{selectedService} (Specified in Ticket)</option>
+                        )}
+                        <option value="Netlogon">Netlogon (Domain Controller Service)</option>
+                        <option value="KDC">KDC (Kerberos Key Distribution Center)</option>
+                        <option value="W3SVC">W3SVC (IIS World Wide Web Publishing Service)</option>
+                        <option value="Spooler">Spooler (Print Spooler Subsystem)</option>
+                        <option value="MSSQLSERVER">MSSQLSERVER (SQL Server Relational Engine)</option>
+                        <option value="nginx">nginx (Linux Reverse Proxy Daemon)</option>
+                        <option value="snmpd">snmpd (SNMP Network Telemetry Daemon)</option>
+                      </TextField>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <Box sx={{ display: 'flex', gap: 1.5 }}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          color={isTicketClosed ? 'inherit' : 'primary'}
+                          startIcon={isTicketClosed ? <LockOutlined sx={{ fontSize: 16 }} /> : (isExecuting ? <CircularProgress size={16} color="inherit" /> : <PlayArrow />)}
+                          disabled={isTicketClosed || !isAutomationReady || isExecuting}
+                          onClick={() => handleStartRestartExecution(true)}
+                          sx={{ textTransform: 'none', fontWeight: 700, py: 1 }}
+                        >
+                          {isTicketClosed ? 'Execution Aborted (Ticket Closed)' : (isExecuting ? 'Restarting Service...' : `Execute Runbook (${selectedService || currentReq.serviceName || 'Service'})`)}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          disabled={isTicketClosed || !isAutomationReady || isExecuting}
+                          onClick={() => handleStartRestartExecution(false)}
+                          sx={{ textTransform: 'none', whiteSpace: 'nowrap', fontSize: '0.75rem' }}
+                        >
+                          Simulate Failure
+                        </Button>
+                      </Box>
+                    </Grid>
                   </Grid>
-                </Grid>
+                )}
               </CardContent>
             </Card>
 
@@ -2170,6 +2181,9 @@ Provide a concise, professional engineer summary suitable for ServiceNow work no
                 onChange={(e) => setInputService(e.target.value)}
                 SelectProps={{ native: true }}
               >
+                <option value="">-- Select or Specify Service --</option>
+                <option value="Netlogon">Netlogon (Domain Controller Service)</option>
+                <option value="KDC">KDC (Kerberos Key Distribution Center)</option>
                 <option value="W3SVC">W3SVC (IIS Web Publishing Service)</option>
                 <option value="MSSQLSERVER">MSSQLSERVER (SQL Server Engine)</option>
                 <option value="nginx">nginx (Linux Reverse Proxy Daemon)</option>

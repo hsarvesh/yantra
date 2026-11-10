@@ -37,6 +37,7 @@ import {
   SendOutlined,
   StorageOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 const sampleTemplates = [
   {
@@ -241,39 +242,36 @@ export default function ServiceNowGeneratorView({ onSampleCreated }) {
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header & Live Connection Status Banner */}
-      <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', mb: 0.5 }}>
-            ServiceNow Live Sample Request Generator
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            Generate real, live Service Requests (`sc_request` & `sc_req_item`) directly into your ServiceNow instance to test end-to-end classification, governance, and MID server execution.
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshOutlined />}
-            onClick={fetchLiveRecords}
-            disabled={isLoading}
-            sx={{ fontWeight: 600 }}
-          >
-            Refresh Records
-          </Button>
-
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AutoAwesomeOutlined />}
-            onClick={handleBatchGenerate}
-            disabled={isGenerating}
-            sx={{ fontWeight: 700 }}
-          >
-            {isGenerating ? 'Generating 5 Samples...' : 'Generate 5 Diverse Samples (1-Click)'}
-          </Button>
-        </Box>
-      </Box>
+      <PageHeader
+        title="ServiceNow RITM Generator"
+        description="Generate real, live Service Requests (sc_request & sc_req_item) directly into your ServiceNow instance to test end-to-end classification, governance, and MID server execution."
+        icon={<AutoAwesomeOutlined />}
+        iconColor="#6366f1"
+        actions={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshOutlined />}
+              onClick={fetchLiveRecords}
+              disabled={isLoading}
+            >
+              Refresh Records
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              size="small"
+              startIcon={<AutoAwesomeOutlined />}
+              onClick={handleBatchGenerate}
+              disabled={isGenerating}
+              sx={{ fontWeight: 700 }}
+            >
+              {isGenerating ? 'Generating...' : 'Generate 5 Samples'}
+            </Button>
+          </Box>
+        }
+      />
 
       {/* Connected Instance Card */}
       <Card sx={{ p: 2, mb: 3, bgcolor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 2.5 }}>

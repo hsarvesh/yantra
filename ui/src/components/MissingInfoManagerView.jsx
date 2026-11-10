@@ -13,8 +13,10 @@ import {
 import {
   EmailOutlined,
   SendOutlined,
-  CheckCircleOutline
+  CheckCircleOutline,
+  HelpOutlineOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 export default function MissingInfoManagerView() {
   const [selectedRitm] = useState('RITM0010904');
@@ -47,14 +49,13 @@ export default function MissingInfoManagerView() {
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', mb: 0.5 }}>
-          Missing Information & Requester Communication Manager
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Enforces BRD §10.6 & §10.7: Automatically pause incomplete requests in Pending Information, cross-reference environmental knowledge, and request strictly minimum missing data.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Missing Info & Requester Communication"
+        description="Automatically pause incomplete requests in Pending Information, cross-reference environmental knowledge, and request strictly minimum missing data."
+        brdRef="§10.6 & §10.7"
+        icon={<HelpOutlineOutlined />}
+        iconColor="#f59e0b"
+      />
 
       <Grid container spacing={2.5}>
         {/* Left: Request Intake & Validation Simulator */}

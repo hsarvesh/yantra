@@ -21,8 +21,10 @@ import {
 } from '@mui/material';
 import {
   SearchOutlined,
-  CloseOutlined
+  CloseOutlined,
+  MenuBookOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 export default function ProcedureRepositoryView({ procedures }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,14 +50,13 @@ export default function ProcedureRepositoryView({ procedures }) {
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', mb: 0.5 }}>
-          Centralized Procedure Repository & SOP Governance Studio
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Approved operational standard operating procedures, version-controlled scripts, input validation schemas, and rollback definitions (BRD §10.3).
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Procedure Repository & SOP Governance"
+        description="Approved operational standard operating procedures, version-controlled scripts, input validation schemas, and rollback definitions."
+        brdRef="§10.3"
+        icon={<MenuBookOutlined />}
+        iconColor="#0284c7"
+      />
 
       {/* Filters & Search */}
       <Card sx={{ p: 2, mb: 2.5, borderRadius: 2.5 }}>

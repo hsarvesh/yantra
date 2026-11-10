@@ -27,11 +27,11 @@
 ID: RULE-INIT-001
 TIMESTAMP: 2026-11-09T12:00:00+05:30
 STAGE: Triage / Assignment Routing
-TICKET: BASELINE-POLICY
+TICKET: MANUAL-INPUT
 CRITERIA: Service restart requested for IIS, Web servers, or Application daemons (e.g. W3SVC, Tomcat, Kestrel)
 DEFAULT_RECOMMENDATION: Server Infrastructure (OS Team)
-ENGINEER_DECISION: Application Support
-RULE: When a service restart is requested for web services or application runtimes (e.g. IIS / W3SVC), route directly to Application Support instead of the OS / Server Infrastructure team.
+ENGINEER_DECISION: Server Infrastructure
+RULE: When a service restart is requested for web services or application runtimes (e.g. IIS / W3SVC), route directly to OS / Server Infrastructure team.
 REASON: Web application service restarts directly impact application availability and end-user transactions; application engineers must validate pools and monitor recovery.
 AUTHOR: Platform Administrator
 
@@ -116,3 +116,15 @@ REASON: Service restarts on W3SVC daemons directly affect users and require Serv
 AUTHOR: Sarvesh Huddedar (Engineer)
 
 
+
+[DECISION_RECORD]
+ID: RULE-MWA6JPWI-836
+TIMESTAMP: 2026-11-10T04:18:24.354Z
+STAGE: Triage / Assignment Routing
+TICKET: MANUAL-INPUT
+CRITERIA: Netlogon on Domain controllers
+DEFAULT_RECOMMENDATION: Server Infrastructure
+ENGINEER_DECISION: Server Infrastructure
+RULE: When service restart is requested for Netlogon on Domain controllers, assign this ticket to Server Infrastructure team
+REASON: 
+AUTHOR: Platform Administrator

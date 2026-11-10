@@ -43,6 +43,7 @@ import {
   SpeedOutlined,
   FilterListOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 const defaultAutoAssignRules = [
   { id: 1, type: 'Server & DC Requests', keywords: 'DC, Domain, Active Directory, Server, WinRM, Windows', targetGroup: 'Server Infrastructure', enabled: true },
@@ -216,60 +217,45 @@ export default function DashboardView({
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Top Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              ServiceNow Live Operational State & ITSM Command Center
-            </Typography>
-            <Chip
+      <PageHeader
+        title="ITSM Command Center"
+        description="Real-time tracking of Incidents, Service Requests, Changes, CMDB assets, and Scheduled Activities with direct 1-click drilldowns into ServiceNow."
+        icon={<DashboardOutlined />}
+        iconColor="#0284c7"
+        actions={
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
               size="small"
-              icon={<SpeedOutlined sx={{ fontSize: 14 }} />}
-              label={`Connected: ${(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SNOW_INSTANCE_URL ? import.meta.env.VITE_SNOW_INSTANCE_URL : 'ServiceNow').replace(/^https?:\/\//, '').replace(/\.service-now\.com.*$/, '')}`}
-              color="success"
-              sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-            />
+              variant="outlined"
+              startIcon={loading ? <CircularProgress size={14} /> : <Refresh />}
+              onClick={fetchItsmOverview}
+              disabled={loading}
+            >
+              {lastRefreshed ? `Refreshed ${lastRefreshed}` : 'Refresh'}
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="secondary"
+              startIcon={<AutoFixHighOutlined />}
+              onClick={() => setRulesDialogOpen(true)}
+              sx={{ fontWeight: 600 }}
+            >
+              Auto-Assign Rules
+            </Button>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={<AssignmentTurnedInOutlined />}
+              onClick={() => onNavigate('engineer_workspace')}
+              sx={{ fontWeight: 700, px: 2 }}
+            >
+              Engineering Hub
+            </Button>
           </Box>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            Real-time tracking of Incidents, Service Requests, Changes, CMDB assets, and Scheduled Activities with direct 1-click drilldowns into ServiceNow.
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={loading ? <CircularProgress size={14} /> : <Refresh />}
-            onClick={fetchItsmOverview}
-            disabled={loading}
-            sx={{ textTransform: 'none', borderRadius: 1.5 }}
-          >
-            {lastRefreshed ? `Refreshed ${lastRefreshed}` : 'Refresh State'}
-          </Button>
-
-          <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            startIcon={<AutoFixHighOutlined />}
-            onClick={() => setRulesDialogOpen(true)}
-            sx={{ textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
-          >
-            Auto-Assignment Rules
-          </Button>
-
-          <Button
-            size="small"
-            variant="contained"
-            color="primary"
-            startIcon={<AssignmentTurnedInOutlined />}
-            onClick={() => onNavigate('engineer_workspace')}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 1.5, px: 2 }}
-          >
-            Open Engineering Hub
-          </Button>
-        </Box>
-      </Box>
+        }
+      />
 
       {/* KPI Cards Grid with Direct SNow Drilldown Links */}
       <Grid container spacing={2} sx={{ mb: 3 }}>

@@ -303,21 +303,13 @@ export default function ServiceNowAdminView({ onNotification }) {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: 'auto' }}>
-      {/* Top Breadcrumb & Title */}
+    <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
+      {/* Top Header */}
       <Box sx={{ mb: 2.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#64748b', fontSize: '0.8rem', mb: 0.5 }}>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: '#94a3b8' }}>ADMINISTRATION</Typography>
-          <span>/</span>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: '#94a3b8' }}>TOOLS CONFIGURATION</Typography>
-          <span>/</span>
-          <Typography variant="caption" sx={{ fontWeight: 700, color: '#0284c7' }}>SERVICENOW INTEGRATION</Typography>
-        </Box>
-
         <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SettingsSuggestOutlined sx={{ color: '#0284c7', fontSize: 30 }} />
+              <SettingsSuggestOutlined sx={{ color: '#0284c7', fontSize: 28 }} />
               ServiceNow Integration & Platform Admin
             </Typography>
             <Typography variant="body2" sx={{ color: '#64748b', mt: 0.3 }}>
@@ -326,17 +318,15 @@ export default function ServiceNowAdminView({ onNotification }) {
           </Box>
 
           {/* Action Bar */}
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {hasUnsavedChanges && (
               <Chip label="Unsaved Changes" color="warning" size="small" sx={{ fontWeight: 700 }} />
             )}
-            
             <Button
               variant="outlined"
               size="small"
               startIcon={<FileDownloadOutlined />}
               onClick={handleExportJson}
-              sx={{ textTransform: 'none', borderColor: '#cbd5e1', color: '#475569' }}
             >
               Export JSON
             </Button>
@@ -345,18 +335,16 @@ export default function ServiceNowAdminView({ onNotification }) {
               size="small"
               color="error"
               onClick={handleResetDefaults}
-              sx={{ textTransform: 'none' }}
             >
               Reset
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               startIcon={<PlayArrow />}
               onClick={runAllTests}
-              sx={{ textTransform: 'none', bgcolor: '#0284c7', '&:hover': { bgcolor: '#0369a1' } }}
             >
-              Run Full Diagnostics
+              Run Diagnostics
             </Button>
             <Button
               variant="contained"
@@ -364,7 +352,7 @@ export default function ServiceNowAdminView({ onNotification }) {
               color="success"
               startIcon={<SaveOutlined />}
               onClick={handleSave}
-              sx={{ textTransform: 'none', fontWeight: 700 }}
+              sx={{ fontWeight: 700 }}
             >
               Save Configuration
             </Button>

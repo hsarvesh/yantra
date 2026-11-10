@@ -205,7 +205,7 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh', bgcolor: '#f8fafc', overflowX: 'hidden' }}>
+      <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh', bgcolor: '#f1f5f9', overflowX: 'hidden' }}>
         {/* Navigation Top Bar */}
         <Navbar
           currentRole={currentRole}
@@ -232,12 +232,12 @@ export default function App() {
             minWidth: 0,
             maxWidth: '100%',
             p: { xs: 2, md: 3 },
-            bgcolor: '#f8fafc',
+            bgcolor: '#f1f5f9',
             boxSizing: 'border-box',
             overflowX: 'hidden',
           }}
         >
-          <Toolbar sx={{ minHeight: '64px !important' }} />
+          <Toolbar sx={{ minHeight: '60px !important' }} />
           
           {currentView === 'snow_generator' && (
             <ServiceNowGeneratorView

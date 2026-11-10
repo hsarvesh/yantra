@@ -23,8 +23,10 @@ import {
 import {
   PlayArrow,
   ScheduleOutlined,
-  SpeedOutlined
+  SpeedOutlined,
+  LayersOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 export default function BulkScheduledView({ bulkTargetServers, procedures }) {
   const [selectedServers, setSelectedServers] = useState(bulkTargetServers.map(s => s.id));
@@ -71,14 +73,13 @@ export default function BulkScheduledView({ bulkTargetServers, procedures }) {
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', mb: 0.5 }}>
-          Bulk Execution & Scheduled Activity Console
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Enforces BRD §14 & §15: Multi-target execution with concurrency rate limits, maintenance window schedule validation, and target-level status tracking.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Bulk Execution & Scheduling Console"
+        description="Multi-target execution with concurrency rate limits, maintenance window schedule validation, and target-level status tracking."
+        brdRef="§14 & §15"
+        icon={<LayersOutlined />}
+        iconColor="#f59e0b"
+      />
 
       <Grid container spacing={2.5}>
         {/* Left: Target Selection & Rate Controls */}

@@ -20,8 +20,10 @@ import {
   FastForwardOutlined,
   RefreshOutlined,
   WarningAmberOutlined,
-  PlayCircleOutline
+  PlayCircleOutline,
+  VerifiedOutlined
 } from '@mui/icons-material';
+import { PageHeader } from './ui';
 
 export default function QualificationTrackerView({
   procedures,
@@ -45,14 +47,13 @@ export default function QualificationTrackerView({
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', mb: 0.5 }}>
-          100-Run Human-in-the-Loop Qualification & Maturity Fleet
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Enforces BRD Section 12: Every automated operational procedure must earn autonomy through 100 consecutive successful engineer-approved executions. Any failure restores human oversight immediately.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="100-Run Qualification & Maturity Fleet"
+        description="Enforces BRD Section 12: Every automated operational procedure must earn autonomy through 100 consecutive successful engineer-approved executions. Any failure restores human oversight immediately."
+        brdRef="§12"
+        icon={<VerifiedOutlined />}
+        iconColor="#10b981"
+      />
 
       {/* Procedure Cards Grid Picker */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
